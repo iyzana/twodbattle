@@ -12,7 +12,10 @@ pub struct PlayerController {
     dy: f64,
     left: bool,
     right: bool,
+    space: bool,
+    jump: bool,
     on_ground: bool,
+    has_double_jump: bool,
 }
 
 impl PlayerController {
@@ -23,7 +26,10 @@ impl PlayerController {
             dy: 0.0,
             left: false,
             right: false,
+            space: false,
+            jump: false,
             on_ground: false,
+            has_double_jump: true,
         }
     }
 
@@ -40,7 +46,9 @@ impl PlayerController {
     }
 
     fn update(&mut self, dt: f64) {
-        self.dx -= self.dx * 4.0 * dt;
+        let friction = if self.on_ground { 16.0 } else { 4.0 };
+
+        self.dx -= self.dx * friction * dt;
         self.dy += 1000.0 * dt;
 
         let speed = 300.0;
@@ -48,6 +56,15 @@ impl PlayerController {
             self.dx = self.dx.min(-speed);
         } else if !self.left && self.right {
             self.dx = self.dx.max(speed);
+        }
+
+        if self.jump && (self.on_ground || self.has_double_jump) {
+            self.jump = false;
+            if !self.on_ground {
+                self.has_double_jump = false;
+            }
+
+            self.dy = if self.on_ground { -800.0 } else { -400.0 };
         }
     }
 
@@ -59,6 +76,7 @@ impl PlayerController {
 
         let mut collides_x = false;
         let mut collides_y = false;
+        self.on_ground = false;
 
         let (cw, ch) = (1920.0 / map.width as f64, 1080.0 / map.height as f64);
         for x in 0..map.width {
@@ -76,6 +94,8 @@ impl PlayerController {
                 if self.collides(moved_y, cell) {
                     if self.dy > 0.0 {
                         self.player.y = y as f64 * cw - self.player.height;
+                        self.on_ground = true;
+                        self.has_double_jump = true;
                     }
 
                     self.dy = 0.0;
@@ -96,6 +116,8 @@ impl PlayerController {
                     let cell = [x as f64 * cw, y as f64 * ch, cw, ch];
 
                     if self.collides(moved_xy, cell) {
+                        self.on_ground = true;
+                        self.has_double_jump = true;
                         self.dx = 0.0;
                         self.dy = 0.0;
                     }
@@ -119,8 +141,12 @@ impl PlayerController {
     }
 
     fn on_input(&mut self, input: ButtonArgs) {
-        if Button::Keyboard(Key::Space) == input.button && ButtonState::Press == input.state {
-            self.dy = -800.0;
+        if Button::Keyboard(Key::Space) == input.button {
+            let pressed = input.state == ButtonState::Press;
+            if !self.space && pressed {
+                self.jump = true;
+            }
+            self.space = pressed;
         }
 
         if Button::Keyboard(Key::A) == input.button {
