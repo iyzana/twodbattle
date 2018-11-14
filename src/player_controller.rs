@@ -60,11 +60,13 @@ impl PlayerController {
 
         if self.jump && (self.on_ground || self.has_double_jump) {
             self.jump = false;
-            if !self.on_ground {
-                self.has_double_jump = false;
-            }
 
-            self.dy = if self.on_ground { -800.0 } else { -400.0 };
+            if self.on_ground {
+                self.dy = -800.0
+            } else {
+                self.has_double_jump = false;
+                self.dy = -400.0;
+            }
         }
     }
 
