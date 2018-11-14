@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use piston::input::keyboard::Key;
 use piston::input::Button;
 use piston::input::ButtonArgs;
@@ -80,52 +81,45 @@ impl PlayerController {
         let mut collides_y = false;
         self.on_ground = false;
 
-        let (cw, ch) = (1920.0 / map.width as f64, 1080.0 / map.height as f64);
-        for x in 0..map.width {
-            for y in 0..map.height {
-                if !map.cell_at(x, y) {
-                    continue;
+        for cell in self.each_cell(map) {
+            if self.collides(moved_x, cell) {
+                self.dx = 0.0;
+                collides_x = true;
+            }
+            if self.collides(moved_y, cell) {
+                if self.dy > 0.0 {
+                    self.player.y = cell[1] - self.player.height;
+                    self.on_ground = true;
+                    self.has_double_jump = true;
                 }
 
-                let cell = [x as f64 * cw, y as f64 * ch, cw, ch];
-
-                if self.collides(moved_x, cell) {
-                    self.dx = 0.0;
-                    collides_x = true;
-                }
-                if self.collides(moved_y, cell) {
-                    if self.dy > 0.0 {
-                        self.player.y = y as f64 * cw - self.player.height;
-                        self.on_ground = true;
-                        self.has_double_jump = true;
-                    }
-
-                    self.dy = 0.0;
-                    collides_y = true;
-                }
+                self.dy = 0.0;
+                collides_y = true;
             }
         }
 
         if !collides_x && !collides_y {
             let moved_xy = [new_player_x, new_player_y, 20.0, 20.0];
 
-            for x in 0..map.width {
-                for y in 0..map.height {
-                    if !map.cell_at(x, y) {
-                        continue;
-                    }
-
-                    let cell = [x as f64 * cw, y as f64 * ch, cw, ch];
-
-                    if self.collides(moved_xy, cell) {
-                        self.on_ground = true;
-                        self.has_double_jump = true;
-                        self.dx = 0.0;
-                        self.dy = 0.0;
-                    }
+            for cell in self.each_cell(map) {
+                if self.collides(moved_xy, cell) {
+                    self.on_ground = true;
+                    self.has_double_jump = true;
+                    self.dx = 0.0;
+                    self.dy = 0.0;
                 }
             }
         }
+    }
+
+    fn each_cell(&self, map: &Map) -> Vec<[f64; 4]> {
+        let (cw, ch) = (1920.0 / map.width as f64, 1080.0 / map.height as f64);
+
+        return (0..map.width)
+            .cartesian_product(0..map.height)
+            .filter(|(x, y)| map.cell_at(*x, *y))
+            .map(|(x, y)| [x as f64 * cw, y as f64 * ch, cw, ch])
+            .collect();
     }
 
     fn collides(&self, a: [f64; 4], b: [f64; 4]) -> bool {
