@@ -8,7 +8,7 @@ pub struct Map {
 
 impl Map {
     pub fn new() -> Map {
-        let width: u32 = 48;
+        let width = 48;
         let height = 27;
         let cells = map_generator::generate_map(width, height);
 

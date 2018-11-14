@@ -23,8 +23,7 @@ impl MapView {
         use graphics::*;
 
         let Map { width, height, .. } = controller.map;
-        let [vw, vh] = c.get_view_size();
-        let (w, h) = (vw / width as f64, vh / height as f64);
+        let (w, h) = (1920.0 / width as f64, 1080.0 / height as f64);
         let color = [1.0; 4];
 
         let rect = Rectangle::new(color);
