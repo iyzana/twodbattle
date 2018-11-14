@@ -134,8 +134,12 @@ impl PlayerController {
     fn on_input(&mut self, input: ButtonArgs) {
         if Button::Keyboard(Key::Space) == input.button {
             let pressed = input.state == ButtonState::Press;
-            if !self.space && pressed {
-                self.jump = true;
+            if pressed {
+                if !self.space {
+                    self.jump = true;
+                }
+            } else {
+                self.jump = false;
             }
             self.space = pressed;
         }
