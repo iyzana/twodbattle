@@ -1,6 +1,5 @@
 use graphics::{Context, Graphics};
-use Player;
-use PlayerController;
+use {Player, PlayerController};
 
 pub struct PlayerView {}
 

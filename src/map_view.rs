@@ -1,6 +1,5 @@
 use graphics::{Context, Graphics};
-use Map;
-use MapController;
+use {Map, MapController};
 
 pub struct MapViewSettings {}
 

@@ -1,11 +1,6 @@
 use itertools::Itertools;
-use piston::input::keyboard::Key;
-use piston::input::Button;
-use piston::input::ButtonArgs;
-use piston::input::ButtonState;
-use piston::input::GenericEvent;
-use Map;
-use Player;
+use piston::input::{keyboard::Key, Button, ButtonArgs, ButtonState, GenericEvent};
+use {Map, Player};
 
 pub struct PlayerController {
     pub player: Player,
