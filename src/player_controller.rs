@@ -58,10 +58,10 @@ impl PlayerController {
             self.jump = false;
 
             if self.on_ground {
-                self.dy = -800.0
+                self.dy = self.dy.min(-800.0);
             } else {
                 self.has_double_jump = false;
-                self.dy = -400.0;
+                self.dy = self.dy.min(-400.0);
             }
         }
     }
