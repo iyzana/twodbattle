@@ -16,6 +16,9 @@ use piston::window::WindowSettings;
 pub use player::Player;
 pub use player_controller::PlayerController;
 pub use player_view::PlayerView;
+pub use shot::Shot;
+pub use shot_controller::ShotController;
+// pub use shot_view::ShotView;
 
 mod map;
 mod map_controller;
@@ -24,6 +27,9 @@ mod map_view;
 mod player;
 mod player_controller;
 mod player_view;
+mod shot;
+mod shot_controller;
+// mod shot_view;
 
 pub fn run() {
     let opengl = OpenGL::V3_3;
