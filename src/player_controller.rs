@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use piston::input::{keyboard::Key, Button, ButtonArgs, ButtonState, GenericEvent, mouse::MouseButton};
-use {Map, Player};
+use crate::{Map, Player};
 
 pub struct PlayerController {
     pub player: Player,

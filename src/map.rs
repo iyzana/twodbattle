@@ -1,4 +1,4 @@
-use map_generator;
+use crate::map_generator;
 
 pub struct Map {
     pub width: u32,

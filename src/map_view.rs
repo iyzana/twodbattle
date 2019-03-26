@@ -1,5 +1,5 @@
 use graphics::{Context, Graphics};
-use {Map, MapController};
+use crate::{Map, MapController};
 
 pub struct MapViewSettings {}
 

@@ -1,4 +1,4 @@
-use Player;
+use crate::Player;
 
 pub struct Shot {
     pub x: f64,
