@@ -19,7 +19,14 @@ impl ShotController {
         player_controller: &PlayerController,
         e: &E,
     ) {
-        fn check_collision(shot: &mut Shot, map: &Map, dt: f64) {}
+        fn check_collision(shot: &mut Shot, map: &Map, dt: f64) {
+
+            
+        }
+
+        fn collides(&self, a: [f64; 4], b: [f64; 4]) -> bool {
+            a[0] < b[0] + b[2] && a[0] + a[2] > b[0] && a[1] < b[1] + b[3] && a[1] + a[3] > b[1]
+        }
 
         fn motion(shot: &mut Shot, dt: f64) {
             shot.x += shot.dx * dt;
@@ -46,10 +53,12 @@ impl ShotController {
             self.shots.push(Shot {
                 x: player_controller.player.x,
                 y: player_controller.player.y,
-                dx: 0.0,
-                dy: 0.0,
+                dx: 20.0,
+                dy: 20.0,
                 owner: player_controller.player.name.clone(),
             });
+
+            self.shoot = false;
         }
     }
 
