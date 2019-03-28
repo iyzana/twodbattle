@@ -50,7 +50,7 @@ pub fn generate_map(width: u32, height: u32) -> Vec<Vec<bool>> {
     to_grid(&walls, width, height)
 }
 
-fn to_grid(walls: &Vec<Wall>, width: u32, height: u32) -> Vec<Vec<bool>> {
+fn to_grid(walls: &[Wall], width: u32, height: u32) -> Vec<Vec<bool>> {
     let mut grid: Vec<Vec<bool>> = (0..width)
         .map(|_| (0..height).map(|_| false).collect())
         .collect();
@@ -123,8 +123,8 @@ fn valid_map(grid: Vec<Vec<bool>>) -> bool {
     let mut closed = HashSet::new();
 
     for y in 0..height {
-        for x in 0..width {
-            if !grid[x][y] {
+        for (x, row) in grid.iter().enumerate() {
+            if !row[y] {
                 open.push((x as i32, y as i32));
                 closed.insert((x as i32, y as i32));
                 break;
@@ -136,7 +136,7 @@ fn valid_map(grid: Vec<Vec<bool>>) -> bool {
     }
 
     while let Some((x, y)) = open.pop() {
-        for neighbor in [(x - 1, y), (x, y - 1), (x + 1, y), (x, y + 1)].into_iter() {
+        for neighbor in [(x - 1, y), (x, y - 1), (x + 1, y), (x, y + 1)].iter() {
             let (nx, ny) = *neighbor;
 
             if nx >= 0 && !grid[nx as usize][ny as usize] && !closed.contains(&(nx, ny)) {
@@ -147,8 +147,8 @@ fn valid_map(grid: Vec<Vec<bool>>) -> bool {
     }
 
     for y in 0..height {
-        for x in 0..width {
-            if !grid[x][y] && !closed.contains(&(x as i32, y as i32)) {
+        for (x, row) in grid.iter().enumerate(){
+            if !row[y] && !closed.contains(&(x as i32, y as i32)) {
                 return false;
             }
         }
@@ -157,7 +157,7 @@ fn valid_map(grid: Vec<Vec<bool>>) -> bool {
     true
 }
 
-fn jumpable(x: usize, y: usize, grid: &Vec<Vec<bool>>, range: RangeInclusive<usize>) -> bool {
+fn jumpable(x: usize, y: usize, grid: &[Vec<bool>], range: RangeInclusive<usize>) -> bool {
     let mut lowest = 10000;
     for tx in range {
         if grid[tx][y] {

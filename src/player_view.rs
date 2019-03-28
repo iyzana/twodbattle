@@ -1,11 +1,12 @@
 use graphics::{Context, Graphics};
 use crate::{Player, PlayerController};
 
+#[derive(Default)]
 pub struct PlayerView {}
 
 impl PlayerView {
     pub fn new() -> PlayerView {
-        PlayerView {}
+        PlayerView::default()
     }
 
     pub fn draw<G: Graphics>(&self, controller: &PlayerController, c: &Context, g: &mut G) {

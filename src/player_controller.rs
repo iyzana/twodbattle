@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use piston::input::{keyboard::Key, Button, ButtonArgs, ButtonState, GenericEvent, mouse::MouseButton};
+use piston::input::{keyboard::Key, Button, ButtonArgs, ButtonState, GenericEvent};
 use crate::{Map, Player};
 
 pub struct PlayerController {
@@ -108,17 +108,17 @@ impl PlayerController {
     }
 
     fn each_cell(&self, map: &Map) -> Vec<[f64; 4]> {
-        let (cw, ch) = (1920.0 / map.width as f64, 1080.0 / map.height as f64);
+        let (cw, ch) = (1920.0 / f64::from(map.width), 1080.0 / f64::from(map.height));
 
-        return (0..map.width)
+        (0..map.width)
             .cartesian_product(0..map.height)
             .filter(|(x, y)| map.cell_at(*x, *y))
-            .map(|(x, y)| [x as f64 * cw, y as f64 * ch, cw, ch])
-            .collect();
+            .map(|(x, y)| [f64::from(x) * cw, f64::from(y) * ch, cw, ch])
+            .collect()
     }
 
     fn collides(&self, a: [f64; 4], b: [f64; 4]) -> bool {
-        return a[0] < b[0] + b[2] && a[0] + a[2] > b[0] && a[1] < b[1] + b[3] && a[1] + a[3] > b[1];
+        a[0] < b[0] + b[2] && a[0] + a[2] > b[0] && a[1] < b[1] + b[3] && a[1] + a[3] > b[1]
     }
 
     fn motion(&mut self, dt: f64) {

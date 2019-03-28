@@ -1,5 +1,6 @@
 use crate::map_generator;
 
+#[derive(Default)]
 pub struct Map {
     pub width: u32,
     pub height: u32,

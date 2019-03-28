@@ -18,7 +18,7 @@ pub use player_controller::PlayerController;
 pub use player_view::PlayerView;
 pub use shot::Shot;
 pub use shot_controller::ShotController;
-// pub use shot_view::ShotView;
+pub use shot_view::ShotView;
 
 mod map;
 mod map_controller;
@@ -29,7 +29,7 @@ mod player_controller;
 mod player_view;
 mod shot;
 mod shot_controller;
-// mod shot_view;
+mod shot_view;
 
 pub fn run() {
     let opengl = OpenGL::V3_3;
@@ -49,13 +49,17 @@ pub fn run() {
     let map_view_settings = MapViewSettings::new();
     let map_view = MapView::new(map_view_settings);
 
-    let player = Player::new(50.0, 50.0);
+    let player = Player::new("succcubbus".to_string(), 50.0, 50.0);
     let mut player_controller = PlayerController::new(player);
     let player_view = PlayerView::new();
+
+    let mut shot_controller = ShotController::new();
+    let shot_view = ShotView::new();
 
     while let Some(event) = events.next(&mut window) {
         map_controller.event(&event);
         player_controller.event(&map_controller.map, &event);
+        shot_controller.event(&map_controller.map, &player_controller, &event);
 
         if let Some(r) = event.render_args() {
             gl.draw(r.viewport(), |c, g| {
@@ -64,6 +68,7 @@ pub fn run() {
 
                 map_view.draw(&map_controller, &c, g);
                 player_view.draw(&player_controller, &c, g);
+                shot_view.draw(&shot_controller, &c, g);
             });
         }
     }

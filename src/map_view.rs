@@ -1,11 +1,12 @@
 use graphics::{Context, Graphics};
 use crate::{Map, MapController};
 
+#[derive(Default)]
 pub struct MapViewSettings {}
 
 impl MapViewSettings {
     pub fn new() -> MapViewSettings {
-        MapViewSettings {}
+        MapViewSettings::default()
     }
 }
 
@@ -22,7 +23,7 @@ impl MapView {
         use graphics::*;
 
         let Map { width, height, .. } = controller.map;
-        let (w, h) = (1920.0 / width as f64, 1080.0 / height as f64);
+        let (w, h) = (1920.0 / f64::from(width), 1080.0 / f64::from(height));
         let color = [1.0; 4];
 
         let rect = Rectangle::new(color);
@@ -30,7 +31,7 @@ impl MapView {
         for x in 0..width {
             for y in 0..height {
                 if controller.map.cell_at(x, y) {
-                    let cell = [x as f64 * w, y as f64 * h, w as f64, h as f64];
+                    let cell = [f64::from(x) * w, f64::from(y) * h, w as f64, h as f64];
                     rect.draw(cell, &c.draw_state, c.transform, g);
                 }
             }

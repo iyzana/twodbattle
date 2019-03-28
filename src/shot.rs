@@ -1,5 +1,3 @@
-use crate::Player;
-
 pub struct Shot {
     pub x: f64,
     pub y: f64,
