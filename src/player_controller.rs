@@ -108,12 +108,10 @@ impl PlayerController {
     }
 
     fn each_cell(&self, map: &Map) -> Vec<[f64; 4]> {
-        let (cw, ch) = (1920.0 / f64::from(map.width), 1080.0 / f64::from(map.height));
-
         (0..map.width)
             .cartesian_product(0..map.height)
             .filter(|(x, y)| map.cell_at(*x, *y))
-            .map(|(x, y)| [f64::from(x) * cw, f64::from(y) * ch, cw, ch])
+            .map(|(x, y)| map.pos_of(x, y))
             .collect()
     }
 

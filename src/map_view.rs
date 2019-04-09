@@ -27,12 +27,14 @@ impl MapView {
         let color = [1.0; 4];
 
         let rect = Rectangle::new(color);
+        let border = Rectangle::new_border([0.0, 0.0, 0.0, 1.0], 5.0);
 
         for x in 0..width {
             for y in 0..height {
                 if controller.map.cell_at(x, y) {
                     let cell = [f64::from(x) * w, f64::from(y) * h, w as f64, h as f64];
                     rect.draw(cell, &c.draw_state, c.transform, g);
+                    border.draw(cell, &c.draw_state, c.transform, g);
                 }
             }
         }

@@ -11,6 +11,6 @@ impl MapController {
     }
 
     pub fn event<E: GenericEvent>(&mut self, e: &E) {
-        if let Some(u) = e.update_args() {}
+        if let Some(_u) = e.update_args() {}
     }
 }
