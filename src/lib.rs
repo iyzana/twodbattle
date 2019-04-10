@@ -41,7 +41,9 @@ pub fn run() {
         .build()
         .unwrap();
 
-    let mut events = Events::new(EventSettings::new());
+    let mut event_settings = EventSettings::new();
+    event_settings.ups_reset = 15;
+    let mut events = Events::new(event_settings);
     let mut gl = GlGraphics::new(opengl);
 
     let map = Map::new();
