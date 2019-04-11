@@ -1,4 +1,4 @@
-use crate::{Map, MapController};
+use crate::MapController;
 use graphics::{Context, Graphics};
 
 #[derive(Default)]
@@ -22,21 +22,14 @@ impl MapView {
     pub fn draw<G: Graphics>(&self, controller: &MapController, c: &Context, g: &mut G) {
         use graphics::*;
 
-        let Map { width, height, .. } = controller.map;
-        let (w, h) = (1920.0 / f64::from(width), 1080.0 / f64::from(height));
         let color = [1.0; 4];
 
         let rect = Rectangle::new(color);
         let border = Rectangle::new_border([0.0, 0.0, 0.0, 1.0], 2.0);
 
-        for x in 0..width {
-            for y in 0..height {
-                if controller.map.cell_at(x, y) {
-                    let cell = [f64::from(x) * w, f64::from(y) * h, w as f64, h as f64];
-                    rect.draw(cell, &c.draw_state, c.transform, g);
-                    border.draw(cell, &c.draw_state, c.transform, g);
-                }
-            }
-        }
+        controller.map.all_cells().for_each(|cell| {
+            rect.draw(cell.bounds(), &c.draw_state, c.transform, g);
+            border.draw(cell.bounds(), &c.draw_state, c.transform, g);
+        });
     }
 }

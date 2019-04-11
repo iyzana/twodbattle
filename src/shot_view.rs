@@ -15,7 +15,7 @@ impl ShotView {
         let ellipse = Ellipse::new(color);
 
         for shot in &controller.shots {
-            ellipse.draw(shot.pos, &c.draw_state, c.transform, g);
+            ellipse.draw(shot.bounds(), &c.draw_state, c.transform, g);
         }
     }
 }

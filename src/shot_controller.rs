@@ -1,5 +1,4 @@
 use crate::{Map, PlayerController, Shot};
-use itertools::Itertools;
 use piston::input::{mouse::MouseButton, Button, ButtonArgs, ButtonState, GenericEvent};
 
 #[derive(Default)]
@@ -22,35 +21,30 @@ impl ShotController {
         e: &E,
     ) {
         fn check_collision(shot: &mut Shot, map: &Map, dt: f64) {
-            let (cell_x, cell_y) = map.pos_from_screen_coords(shot.pos);
-            let cells: Vec<[f64; 4]> = (cell_x.max(1) - 1..(cell_x + 2).min(map.width))
-                .cartesian_product(cell_y.max(1) - 1..(cell_y + 2).min(map.height))
-                .filter(|(x, y)| map.cell_at(*x, *y))
-                .map(|(x, y)| map.pos_of(x, y))
-                .collect();
+            let cells = map.cells_around(shot.x, shot.y).collect::<Vec<_>>();
 
-            let new_shot_x = shot.pos[0] + shot.dx * dt;
-            let new_shot_y = shot.pos[1] + shot.dy * dt;
-            let moved_x = [new_shot_x, shot.pos[1], 15.0, 15.0];
-            let moved_y = [shot.pos[0], new_shot_y, 15.0, 15.0];
+            let new_shot_x = shot.x + shot.dx * dt;
+            let new_shot_y = shot.y + shot.dy * dt;
+            let moved_x = [new_shot_x, shot.y, shot.w, shot.h];
+            let moved_y = [shot.x, new_shot_y, shot.w, shot.h];
 
             let mut collides_x = false;
             let mut collides_y = false;
 
-            if cells.iter().any(|c| collides(moved_x, *c)) {
+            if cells.iter().any(|cell| collides(moved_x, cell.bounds())) {
                 shot.dx = -shot.dx;
                 collides_x = true;
             }
 
-            if cells.iter().any(|c| collides(moved_y, *c)) {
+            if cells.iter().any(|cell| collides(moved_y, cell.bounds())) {
                 shot.dy = -shot.dy;
                 collides_y = true;
             }
 
             if !collides_x && !collides_y {
-                let moved_xy = [new_shot_x, new_shot_y, 15.0, 15.0];
+                let moved_xy = [new_shot_x, new_shot_y, shot.w, shot.h];
 
-                if cells.iter().any(|c| collides(moved_xy, *c)) {
+                if cells.iter().any(|cell| collides(moved_xy, cell.bounds())) {
                     shot.dx = -shot.dx;
                     shot.dy = -shot.dy;
                     collides_x = true;
@@ -68,8 +62,8 @@ impl ShotController {
         }
 
         fn motion(shot: &mut Shot, dt: f64) {
-            shot.pos[0] += shot.dx * dt;
-            shot.pos[1] += shot.dy * dt;
+            shot.x += shot.dx * dt;
+            shot.y += shot.dy * dt;
         }
 
         if let Some(tick) = e.update_args() {
@@ -80,8 +74,9 @@ impl ShotController {
                 motion(&mut shot, tick.dt);
             }
 
-            self.shots
-                .retain(|shot| shot.lives > 0 && collides(shot.pos, [0.0, 0.0, 1920.0, 1080.0]));
+            self.shots.retain(|shot| {
+                shot.lives > 0 && collides(shot.bounds(), [0.0, 0.0, 1920.0, 1080.0])
+            });
         }
 
         if let Some(input) = e.button_args() {

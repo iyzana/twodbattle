@@ -17,12 +17,20 @@ impl PlayerView {
             y,
             width,
             height,
+            lives,
             ..
         } = controller.player;
 
-        let color = [1.0, 0.0, 0.0, 1.0];
+        let color = [f32::from(lives) / 20.0, 0.0, 0.0, 1.0];
+        let border_color = [1.0, 0.0, 0.0, 1.0];
         let coords = [x, y, width, height];
 
         Rectangle::new_round(color, 5.0).draw(coords, &c.draw_state, c.transform, g);
+        Rectangle::new_round_border(border_color, 5.0, 1.0).draw(
+            coords,
+            &c.draw_state,
+            c.transform,
+            g,
+        );
     }
 }

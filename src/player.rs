@@ -4,6 +4,7 @@ pub struct Player {
     pub y: f64,
     pub width: f64,
     pub height: f64,
+    pub lives: u8,
 }
 
 impl Player {
@@ -14,6 +15,11 @@ impl Player {
             y,
             width: 20.0,
             height: 20.0,
+            lives: 20,
         }
+    }
+
+    pub fn bounds(&self) -> [f64; 4] {
+        [self.x, self.y, self.width, self.height]
     }
 }

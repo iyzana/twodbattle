@@ -1,5 +1,4 @@
-use crate::{Map, Player};
-use itertools::Itertools;
+use crate::{Map, Player, ShotController};
 use piston::input::{keyboard::Key, Button, ButtonArgs, ButtonState, GenericEvent};
 
 pub struct PlayerController {
@@ -29,10 +28,15 @@ impl PlayerController {
         }
     }
 
-    pub fn event<E: GenericEvent>(&mut self, map: &Map, e: &E) {
+    pub fn event<E: GenericEvent>(
+        &mut self,
+        map: &Map,
+        shot_controller: &mut ShotController,
+        e: &E,
+    ) {
         if let Some(tick) = e.update_args() {
             self.update(tick.dt);
-            self.check_collision(map, tick.dt);
+            self.check_collision(map, tick.dt, shot_controller);
             self.motion(tick.dt);
         }
 
@@ -66,7 +70,7 @@ impl PlayerController {
         }
     }
 
-    fn check_collision(&mut self, map: &Map, dt: f64) {
+    fn check_collision(&mut self, map: &Map, dt: f64, shot_controller: &mut ShotController) {
         let new_player_x = self.player.x + self.dx * dt;
         let new_player_y = self.player.y + self.dy * dt;
         let moved_x = [new_player_x, self.player.y, 20.0, 20.0];
@@ -76,14 +80,20 @@ impl PlayerController {
         let mut collides_y = false;
         self.on_ground = false;
 
-        let cells = self.each_cell(map);
-        if cells.iter().any(|cell| self.collides(moved_x, *cell)) {
+        let cells = map.all_cells().collect::<Vec<_>>();
+        if cells
+            .iter()
+            .any(|cell| Self::collides(moved_x, cell.bounds()))
+        {
             self.dx = 0.0;
             collides_x = true;
         }
-        if let Some(cell) = cells.iter().find(|cell| self.collides(moved_y, **cell)) {
+        if let Some(cell) = cells
+            .iter()
+            .find(|cell| Self::collides(moved_y, cell.bounds()))
+        {
             if self.dy > 0.0 {
-                self.player.y = cell[1] - self.player.height;
+                self.player.y = cell.y - self.player.height;
                 self.on_ground = true;
                 self.has_double_jump = true;
             }
@@ -95,24 +105,26 @@ impl PlayerController {
         if !collides_x && !collides_y {
             let moved_xy = [new_player_x, new_player_y, 20.0, 20.0];
 
-            if cells.iter().any(|cell| self.collides(moved_xy, *cell)) {
+            if cells
+                .iter()
+                .any(|cell| Self::collides(moved_xy, cell.bounds()))
+            {
                 self.on_ground = true;
                 self.has_double_jump = true;
                 self.dx = 0.0;
                 self.dy = 0.0;
             }
         }
+
+        for shot in &mut shot_controller.shots {
+            if Self::collides(self.player.bounds(), shot.bounds()) {
+                shot.lives = 0;
+                self.player.lives -= 1;
+            }
+        }
     }
 
-    fn each_cell(&self, map: &Map) -> Vec<[f64; 4]> {
-        (0..map.width)
-            .cartesian_product(0..map.height)
-            .filter(|(x, y)| map.cell_at(*x, *y))
-            .map(|(x, y)| map.pos_of(x, y))
-            .collect()
-    }
-
-    fn collides(&self, a: [f64; 4], b: [f64; 4]) -> bool {
+    fn collides(a: [f64; 4], b: [f64; 4]) -> bool {
         a[0] < b[0] + b[2] && a[0] + a[2] > b[0] && a[1] < b[1] + b[3] && a[1] + a[3] > b[1]
     }
 

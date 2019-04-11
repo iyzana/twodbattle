@@ -20,6 +20,7 @@ pub use shot::Shot;
 pub use shot_controller::ShotController;
 pub use shot_view::ShotView;
 
+mod cell;
 mod map;
 mod map_controller;
 mod map_generator;
@@ -60,7 +61,7 @@ pub fn run() {
 
     while let Some(event) = events.next(&mut window) {
         map_controller.event(&event);
-        player_controller.event(&map_controller.map, &event);
+        player_controller.event(&map_controller.map, &mut shot_controller, &event);
         shot_controller.event(&map_controller.map, &player_controller, &event);
 
         if let Some(r) = event.render_args() {

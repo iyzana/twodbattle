@@ -1,28 +1,32 @@
+use rand::distributions::{Distribution, Uniform};
 use rand::Rng;
 use std::collections::HashSet;
 use std::ops::RangeInclusive;
 
-pub fn generate_map(width: u32, height: u32) -> Vec<Vec<bool>> {
+pub fn generate_map(width: u8, height: u8) -> Vec<Vec<bool>> {
     let mut rng = rand::thread_rng();
     let num_walls = 16;
     let mut walls: Vec<Wall> = vec![];
-    let min_width = width as f32 * 0.3;
-    let max_width = width as f32 * 0.5;
-    let min_height = height as f32 * 0.3;
-    let max_height = height as f32 * 0.5;
+    let min_width = (f64::from(width) * 0.3) as u8;
+    let max_width = (f64::from(width) * 0.5) as u8;
+    let min_height = (f64::from(height) * 0.3) as u8;
+    let max_height = (f64::from(height) * 0.5) as u8;
 
     walls.push(Wall(0, 0, width, true));
     walls.push(Wall(0, height - 1, width, true));
     walls.push(Wall(0, 0, height, false));
     walls.push(Wall(width - 1, 0, height, false));
 
+    let width_distribution = Uniform::from(min_width..max_width);
+    let height_distribution = Uniform::from(min_height..max_height);
+
     while walls.len() < num_walls {
         let x = rng.gen_range(1, width - 1);
         let y = rng.gen_range(1, height - 1);
-        let (size, horizontal) = if rng.gen::<f32>() < 0.7 {
-            (rng.gen_range(0.0, max_width).max(min_width) as u32, true)
+        let (size, horizontal) = if rng.gen::<f64>() < 0.7 {
+            (width_distribution.sample(&mut rng), true)
         } else {
-            (rng.gen_range(0.0, max_height).max(min_height) as u32, false)
+            (height_distribution.sample(&mut rng), false)
         };
         let wall = Wall(x, y, size, horizontal);
 
@@ -50,7 +54,7 @@ pub fn generate_map(width: u32, height: u32) -> Vec<Vec<bool>> {
     to_grid(&walls, width, height)
 }
 
-fn to_grid(walls: &[Wall], width: u32, height: u32) -> Vec<Vec<bool>> {
+fn to_grid(walls: &[Wall], width: u8, height: u8) -> Vec<Vec<bool>> {
     let mut grid: Vec<Vec<bool>> = (0..width)
         .map(|_| (0..height).map(|_| false).collect())
         .collect();
@@ -174,7 +178,7 @@ fn jumpable(x: usize, y: usize, grid: &[Vec<bool>], range: RangeInclusive<usize>
     lowest <= 8
 }
 
-struct Wall(u32, u32, u32, bool);
+struct Wall(u8, u8, u8, bool);
 
 impl Wall {
     fn intersects(&self, other: &Wall) -> bool {
@@ -191,15 +195,15 @@ impl Wall {
         }
     }
 
-    fn x(&self) -> u32 {
+    fn x(&self) -> u8 {
         self.0
     }
 
-    fn y(&self) -> u32 {
+    fn y(&self) -> u8 {
         self.1
     }
 
-    fn width(&self) -> u32 {
+    fn width(&self) -> u8 {
         if self.3 {
             self.2
         } else {
@@ -207,7 +211,7 @@ impl Wall {
         }
     }
 
-    fn height(&self) -> u32 {
+    fn height(&self) -> u8 {
         if self.3 {
             1
         } else {
