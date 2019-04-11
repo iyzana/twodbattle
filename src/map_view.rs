@@ -1,5 +1,5 @@
-use graphics::{Context, Graphics};
 use crate::{Map, MapController};
+use graphics::{Context, Graphics};
 
 #[derive(Default)]
 pub struct MapViewSettings {}
@@ -27,7 +27,7 @@ impl MapView {
         let color = [1.0; 4];
 
         let rect = Rectangle::new(color);
-        let border = Rectangle::new_border([0.0, 0.0, 0.0, 1.0], 5.0);
+        let border = Rectangle::new_border([0.0, 0.0, 0.0, 1.0], 2.0);
 
         for x in 0..width {
             for y in 0..height {

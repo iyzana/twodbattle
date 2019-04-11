@@ -1,4 +1,4 @@
-use crate::{ShotController};
+use crate::ShotController;
 use graphics::{Context, Graphics};
 
 #[derive(Default)]

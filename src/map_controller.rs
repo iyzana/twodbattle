@@ -1,5 +1,5 @@
-use piston::input::GenericEvent;
 use crate::Map;
+use piston::input::GenericEvent;
 
 pub struct MapController {
     pub map: Map,

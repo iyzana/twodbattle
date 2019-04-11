@@ -147,7 +147,7 @@ fn valid_map(grid: Vec<Vec<bool>>) -> bool {
     }
 
     for y in 0..height {
-        for (x, row) in grid.iter().enumerate(){
+        for (x, row) in grid.iter().enumerate() {
             if !row[y] && !closed.contains(&(x as i32, y as i32)) {
                 return false;
             }
@@ -179,13 +179,15 @@ struct Wall(u32, u32, u32, bool);
 impl Wall {
     fn intersects(&self, other: &Wall) -> bool {
         if self.3 {
-            self.y() == other.y() && !(self.x() < other.x() && self.x() + self.width() < other.x()
-                || self.x() > other.x() + other.width()
-                    && self.x() + self.width() > other.x() + other.width())
+            self.y() == other.y()
+                && !(self.x() < other.x() && self.x() + self.width() < other.x()
+                    || self.x() > other.x() + other.width()
+                        && self.x() + self.width() > other.x() + other.width())
         } else {
-            self.x() == other.x() && !(self.y() < other.y() && self.y() + self.height() < other.y()
-                || self.y() > other.y() + other.height()
-                    && self.y() + self.height() > other.y() + other.height())
+            self.x() == other.x()
+                && !(self.y() < other.y() && self.y() + self.height() < other.y()
+                    || self.y() > other.y() + other.height()
+                        && self.y() + self.height() > other.y() + other.height())
         }
     }
 

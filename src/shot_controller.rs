@@ -1,4 +1,5 @@
 use crate::{Map, PlayerController, Shot};
+use itertools::Itertools;
 use piston::input::{mouse::MouseButton, Button, ButtonArgs, ButtonState, GenericEvent};
 
 #[derive(Default)]
@@ -22,6 +23,11 @@ impl ShotController {
     ) {
         fn check_collision(shot: &mut Shot, map: &Map, dt: f64) {
             let (cell_x, cell_y) = map.pos_from_screen_coords(shot.pos);
+            let cells: Vec<[f64; 4]> = (cell_x.max(1) - 1..(cell_x + 2).min(map.width))
+                .cartesian_product(cell_y.max(1) - 1..(cell_y + 2).min(map.height))
+                .filter(|(x, y)| map.cell_at(*x, *y))
+                .map(|(x, y)| map.pos_of(x, y))
+                .collect();
 
             let new_shot_x = shot.pos[0] + shot.dx * dt;
             let new_shot_y = shot.pos[1] + shot.dy * dt;
@@ -31,40 +37,29 @@ impl ShotController {
             let mut collides_x = false;
             let mut collides_y = false;
 
-            for x in cell_x.max(1) - 1..(cell_x + 2).min(map.width) {
-                for y in cell_y.max(1) - 1..(cell_y + 2).min(map.height) {
-                    if !map.cell_at(x, y) {
-                        continue;
-                    }
-                    let cell = map.pos_of(x, y);
-                    if !collides_x && collides(moved_x, cell) {
-                        shot.dx = -shot.dx;
-                        collides_x = true;
-                    }
-                    if !collides_y && collides(moved_y, cell) {
-                        shot.dy = -shot.dy;
-                        collides_y = true;
-                    }
-                }
+            if cells.iter().any(|c| collides(moved_x, *c)) {
+                shot.dx = -shot.dx;
+                collides_x = true;
+            }
+
+            if cells.iter().any(|c| collides(moved_y, *c)) {
+                shot.dy = -shot.dy;
+                collides_y = true;
             }
 
             if !collides_x && !collides_y {
                 let moved_xy = [new_shot_x, new_shot_y, 15.0, 15.0];
 
-                for x in cell_x.max(1) - 1..(cell_x + 2).min(map.width) {
-                    for y in cell_y.max(1) - 1..(cell_y + 2).min(map.height) {
-                        if !map.cell_at(x, y) {
-                            continue;
-                        }
-
-                        let cell = map.pos_of(x, y);
-                        if collides(moved_xy, cell) {
-                            shot.dx = -shot.dx;
-                            shot.dy = -shot.dy;
-                            break;
-                        }
-                    }
+                if cells.iter().any(|c| collides(moved_xy, *c)) {
+                    shot.dx = -shot.dx;
+                    shot.dy = -shot.dy;
+                    collides_x = true;
+                    collides_y = true;
                 }
+            }
+
+            if collides_x || collides_y {
+                shot.lives -= 1;
             }
         }
 
@@ -86,7 +81,7 @@ impl ShotController {
             }
 
             self.shots
-                .retain(|shot| collides(shot.pos, [0.0, 0.0, 1920.0, 1080.0]));
+                .retain(|shot| shot.lives > 0 && collides(shot.pos, [0.0, 0.0, 1920.0, 1080.0]));
         }
 
         if let Some(input) = e.button_args() {
@@ -105,12 +100,14 @@ impl ShotController {
             let dx = player_x - self.mouse_pos[0];
             let dy = player_y - self.mouse_pos[1];
             let angle = dy.atan2(dx);
+            let speed = 800.0;
             self.shots.push(Shot::new(
                 player_x,
                 player_y,
-                500.0 * -angle.cos(),
-                500.0 * -angle.sin(),
+                speed * -angle.cos(),
+                speed * -angle.sin(),
                 player_controller.player.name.clone(),
+                5,
             ));
 
             self.shoot = false;

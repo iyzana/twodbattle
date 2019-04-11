@@ -1,5 +1,5 @@
-use graphics::{Context, Graphics};
 use crate::{Player, PlayerController};
+use graphics::{Context, Graphics};
 
 #[derive(Default)]
 pub struct PlayerView {}

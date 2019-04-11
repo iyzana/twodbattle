@@ -1,6 +1,6 @@
+use crate::{Map, Player};
 use itertools::Itertools;
 use piston::input::{keyboard::Key, Button, ButtonArgs, ButtonState, GenericEvent};
-use crate::{Map, Player};
 
 pub struct PlayerController {
     pub player: Player,
@@ -76,33 +76,30 @@ impl PlayerController {
         let mut collides_y = false;
         self.on_ground = false;
 
-        for cell in self.each_cell(map) {
-            if self.collides(moved_x, cell) {
-                self.dx = 0.0;
-                collides_x = true;
+        let cells = self.each_cell(map);
+        if cells.iter().any(|cell| self.collides(moved_x, *cell)) {
+            self.dx = 0.0;
+            collides_x = true;
+        }
+        if let Some(cell) = cells.iter().find(|cell| self.collides(moved_y, **cell)) {
+            if self.dy > 0.0 {
+                self.player.y = cell[1] - self.player.height;
+                self.on_ground = true;
+                self.has_double_jump = true;
             }
-            if self.collides(moved_y, cell) {
-                if self.dy > 0.0 {
-                    self.player.y = cell[1] - self.player.height;
-                    self.on_ground = true;
-                    self.has_double_jump = true;
-                }
 
-                self.dy = 0.0;
-                collides_y = true;
-            }
+            self.dy = 0.0;
+            collides_y = true;
         }
 
         if !collides_x && !collides_y {
             let moved_xy = [new_player_x, new_player_y, 20.0, 20.0];
 
-            for cell in self.each_cell(map) {
-                if self.collides(moved_xy, cell) {
-                    self.on_ground = true;
-                    self.has_double_jump = true;
-                    self.dx = 0.0;
-                    self.dy = 0.0;
-                }
+            if cells.iter().any(|cell| self.collides(moved_xy, *cell)) {
+                self.on_ground = true;
+                self.has_double_jump = true;
+                self.dx = 0.0;
+                self.dy = 0.0;
             }
         }
     }
