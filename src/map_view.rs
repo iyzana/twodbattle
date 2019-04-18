@@ -1,3 +1,4 @@
+use crate::entity::Bounds;
 use crate::MapController;
 use graphics::{Context, Graphics};
 

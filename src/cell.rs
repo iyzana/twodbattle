@@ -1,3 +1,5 @@
+use crate::entity::Bounds;
+
 #[derive(Debug)]
 pub struct Cell {
     pub x: f64,
@@ -7,8 +9,17 @@ pub struct Cell {
     pub state: bool,
 }
 
-impl Cell {
-    pub fn bounds(&self) -> [f64; 4] {
-        [self.x, self.y, self.w, self.h]
+impl Bounds for Cell {
+    fn x(&self) -> f64 {
+        self.x
+    }
+    fn y(&self) -> f64 {
+        self.y
+    }
+    fn w(&self) -> f64 {
+        self.w
+    }
+    fn h(&self) -> f64 {
+        self.h
     }
 }

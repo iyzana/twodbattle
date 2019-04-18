@@ -21,6 +21,8 @@ pub use shot_controller::ShotController;
 pub use shot_view::ShotView;
 
 mod cell;
+mod collision;
+mod entity;
 mod map;
 mod map_controller;
 mod map_generator;

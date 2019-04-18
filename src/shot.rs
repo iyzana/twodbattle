@@ -1,3 +1,5 @@
+use crate::entity::{Bounds, Speed};
+
 pub struct Shot {
     pub x: f64,
     pub y: f64,
@@ -25,5 +27,29 @@ impl Shot {
 
     pub fn bounds(&self) -> [f64; 4] {
         [self.x, self.y, self.w, self.h]
+    }
+}
+
+impl Bounds for Shot {
+    fn x(&self) -> f64 {
+        self.x
+    }
+    fn y(&self) -> f64 {
+        self.y
+    }
+    fn w(&self) -> f64 {
+        self.w
+    }
+    fn h(&self) -> f64 {
+        self.h
+    }
+}
+
+impl Speed for Shot {
+    fn dx(&self) -> f64 {
+        self.dx
+    }
+    fn dy(&self) -> f64 {
+        self.dy
     }
 }

@@ -1,3 +1,5 @@
+use crate::collision::check_collision;
+use crate::collision::Collision;
 use crate::{Map, PlayerController, Shot};
 use piston::input::{mouse::MouseButton, Button, ButtonArgs, ButtonState, GenericEvent};
 
@@ -20,40 +22,24 @@ impl ShotController {
         player_controller: &PlayerController,
         e: &E,
     ) {
-        fn check_collision(shot: &mut Shot, map: &Map, dt: f64) {
-            let cells = map.cells_around(shot.x, shot.y).collect::<Vec<_>>();
-
-            let new_shot_x = shot.x + shot.dx * dt;
-            let new_shot_y = shot.y + shot.dy * dt;
-            let moved_x = [new_shot_x, shot.y, shot.w, shot.h];
-            let moved_y = [shot.x, new_shot_y, shot.w, shot.h];
-
-            let mut collides_x = false;
-            let mut collides_y = false;
-
-            if cells.iter().any(|cell| collides(moved_x, cell.bounds())) {
-                shot.dx = -shot.dx;
-                collides_x = true;
-            }
-
-            if cells.iter().any(|cell| collides(moved_y, cell.bounds())) {
-                shot.dy = -shot.dy;
-                collides_y = true;
-            }
-
-            if !collides_x && !collides_y {
-                let moved_xy = [new_shot_x, new_shot_y, shot.w, shot.h];
-
-                if cells.iter().any(|cell| collides(moved_xy, cell.bounds())) {
+        fn process_collision(shot: &mut Shot, map: &Map, dt: f64) {
+            let cells: Vec<_> = map.all_cells().collect();
+            match check_collision(shot, &cells, dt) {
+                Some(Collision::SIDE { x, y }) => {
+                    if x.is_some() {
+                        shot.dx = -shot.dx;
+                    }
+                    if y.is_some() {
+                        shot.dy = -shot.dy;
+                    }
+                    shot.lives -= 1;
+                }
+                Some(Collision::CORNER) => {
                     shot.dx = -shot.dx;
                     shot.dy = -shot.dy;
-                    collides_x = true;
-                    collides_y = true;
+                    shot.lives -= 1;
                 }
-            }
-
-            if collides_x || collides_y {
-                shot.lives -= 1;
+                _ => {}
             }
         }
 
@@ -69,14 +55,14 @@ impl ShotController {
         if let Some(tick) = e.update_args() {
             self.update(player_controller);
 
-            for mut shot in self.shots.iter_mut() {
-                check_collision(&mut shot, map, tick.dt);
-                motion(&mut shot, tick.dt);
-            }
-
             self.shots.retain(|shot| {
                 shot.lives > 0 && collides(shot.bounds(), [0.0, 0.0, 1920.0, 1080.0])
             });
+
+            for mut shot in self.shots.iter_mut() {
+                process_collision(&mut shot, map, tick.dt);
+                motion(&mut shot, tick.dt);
+            }
         }
 
         if let Some(input) = e.button_args() {
