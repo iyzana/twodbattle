@@ -87,15 +87,20 @@ impl PlayerController {
                     }
 
                     self.player.dy = 0.0;
+                } else {
+                    self.on_ground = false;
                 }
             }
-            Some(Collision::CORNER) => {
+            Some(Collision::CORNER { cell }) => {
                 self.on_ground = true;
                 self.has_double_jump = true;
+                self.player.y = cell.y - self.player.height;
                 self.player.dx = 0.0;
                 self.player.dy = 0.0;
             }
-            _ => {}
+            _ => {
+                self.on_ground = false;
+            }
         }
 
         for shot in &mut shot_controller.shots {

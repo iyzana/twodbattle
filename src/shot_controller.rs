@@ -34,7 +34,7 @@ impl ShotController {
                     }
                     shot.lives -= 1;
                 }
-                Some(Collision::CORNER) => {
+                Some(Collision::CORNER { .. }) => {
                     shot.dx = -shot.dx;
                     shot.dy = -shot.dy;
                     shot.lives -= 1;
