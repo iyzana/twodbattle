@@ -21,6 +21,10 @@ impl PlayerView {
             ..
         } = controller.player;
 
+        if lives == 0 {
+            return;
+        }
+
         let color = [f32::from(lives) / 20.0, 0.0, 0.0, 1.0];
         let border_color = [1.0, 0.0, 0.0, 1.0];
         let coords = [x, y, width, height];

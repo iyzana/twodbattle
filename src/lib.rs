@@ -38,7 +38,7 @@ pub fn run() {
         .exit_on_esc(true)
         .samples(16)
         .opengl(opengl)
-        .fullscreen(false)
+        .fullscreen(true)
         .build()
         .unwrap();
 

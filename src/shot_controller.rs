@@ -89,16 +89,17 @@ impl ShotController {
     }
 
     fn update(&mut self, player_controller: &PlayerController) {
-        if self.shoot {
+        if self.shoot && player_controller.player.lives > 0 {
             let player_x = player_controller.player.x;
             let player_y = player_controller.player.y;
             let dx = player_x - self.mouse_pos[0];
             let dy = player_y - self.mouse_pos[1];
             let angle = dy.atan2(dx);
             let speed = 800.0;
+            let spawn_dist = 20.0;
             self.shots.push(Shot::new(
-                player_x,
-                player_y,
+                player_x + spawn_dist * -angle.cos(),
+                player_y + spawn_dist * -angle.sin(),
                 speed * -angle.cos(),
                 speed * -angle.sin(),
                 player_controller.player.name.clone(),

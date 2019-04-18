@@ -34,9 +34,13 @@ impl PlayerController {
         shot_controller: &mut ShotController,
         e: &E,
     ) {
+        if self.player.lives == 0 {
+            return;
+        }
+
         if let Some(tick) = e.update_args() {
             self.update(tick.dt);
-            self.check_collision(map, tick.dt, shot_controller);
+            self.process_collision(map, tick.dt, shot_controller);
             self.motion(tick.dt);
         }
 
@@ -70,7 +74,7 @@ impl PlayerController {
         }
     }
 
-    fn check_collision(&mut self, map: &Map, dt: f64, shot_controller: &mut ShotController) {
+    fn process_collision(&mut self, map: &Map, dt: f64, shot_controller: &mut ShotController) {
         let new_player_x = self.player.x + self.dx * dt;
         let new_player_y = self.player.y + self.dy * dt;
         let moved_x = [new_player_x, self.player.y, 20.0, 20.0];
@@ -117,7 +121,7 @@ impl PlayerController {
         }
 
         for shot in &mut shot_controller.shots {
-            if Self::collides(self.player.bounds(), shot.bounds()) {
+            if self.player.lives > 0 && Self::collides(self.player.bounds(), shot.bounds()) {
                 shot.lives = 0;
                 self.player.lives -= 1;
             }
