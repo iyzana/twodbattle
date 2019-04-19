@@ -1,4 +1,4 @@
-use crate::collision::check_collision;
+use crate::collision;
 use crate::collision::Collision;
 use crate::{Map, PlayerController, Shot};
 use piston::input::{mouse::MouseButton, Button, ButtonArgs, ButtonState, GenericEvent};
@@ -12,8 +12,8 @@ pub struct ShotController {
 }
 
 impl ShotController {
-    pub fn new() -> ShotController {
-        ShotController::default()
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn event<E: GenericEvent>(
@@ -24,7 +24,7 @@ impl ShotController {
     ) {
         fn process_collision(shot: &mut Shot, map: &Map, dt: f64) {
             let cells: Vec<_> = map.all_cells().collect();
-            match check_collision(shot, &cells, dt) {
+            match collision::check(shot, &cells, dt) {
                 Some(Collision::SIDE { x, y }) => {
                     if x.is_some() {
                         shot.dx = -shot.dx;
@@ -59,7 +59,7 @@ impl ShotController {
                 shot.lives > 0 && collides(shot.bounds(), [0.0, 0.0, 1920.0, 1080.0])
             });
 
-            for mut shot in self.shots.iter_mut() {
+            for mut shot in &mut self.shots {
                 process_collision(&mut shot, map, tick.dt);
                 motion(&mut shot, tick.dt);
             }

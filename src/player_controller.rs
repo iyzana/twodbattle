@@ -1,4 +1,4 @@
-use crate::collision::check_collision;
+use crate::collision;
 use crate::collision::Collision;
 use crate::{Map, Player, ShotController};
 use piston::input::{keyboard::Key, Button, ButtonArgs, ButtonState, GenericEvent};
@@ -14,8 +14,8 @@ pub struct PlayerController {
 }
 
 impl PlayerController {
-    pub fn new(player: Player) -> PlayerController {
-        PlayerController {
+    pub fn new(player: Player) -> Self {
+        Self {
             player,
             left: false,
             right: false,
@@ -48,33 +48,33 @@ impl PlayerController {
     }
 
     fn update(&mut self, dt: f64) {
-        let friction = if self.on_ground { 16.0 } else { 4.0 };
-
-        self.player.dx -= self.player.dx * friction * dt;
-        self.player.dy += 1000.0 * dt;
-
         let speed = 300.0;
         if self.left && !self.right {
             self.player.dx = self.player.dx.min(-speed);
         } else if !self.left && self.right {
             self.player.dx = self.player.dx.max(speed);
+        } else {
+            let friction = if self.on_ground { 16.0 } else { 4.0 };
+            self.player.dx -= self.player.dx * friction * dt;
         }
 
         if self.jump && (self.on_ground || self.has_double_jump) {
             self.jump = false;
 
             if self.on_ground {
-                self.player.dy = self.player.dy.min(-800.0);
+                self.player.dy = self.player.dy.min(-805.0);
             } else {
                 self.has_double_jump = false;
-                self.player.dy = self.player.dy.min(-400.0);
+                self.player.dy = self.player.dy.min(-405.0);
             }
+        } else {
+            self.player.dy += 1000.0 * dt;
         }
     }
 
     fn process_collision(&mut self, map: &Map, dt: f64, shot_controller: &mut ShotController) {
         let cells: Vec<_> = map.all_cells().collect();
-        match check_collision(&self.player, &cells, dt) {
+        match collision::check(&self.player, &cells, dt) {
             Some(Collision::SIDE { x, y }) => {
                 if x.is_some() {
                     self.player.dx = 0.0;

@@ -6,8 +6,8 @@ pub struct MapController {
 }
 
 impl MapController {
-    pub fn new(map: Map) -> MapController {
-        MapController { map }
+    pub fn new(map: Map) -> Self {
+        Self { map }
     }
 
     pub fn event<E: GenericEvent>(&mut self, e: &E) {

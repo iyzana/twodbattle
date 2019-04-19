@@ -6,8 +6,8 @@ use graphics::{Context, Graphics};
 pub struct MapViewSettings {}
 
 impl MapViewSettings {
-    pub fn new() -> MapViewSettings {
-        MapViewSettings::default()
+    pub fn new() -> Self {
+        Self::default()
     }
 }
 
@@ -16,8 +16,8 @@ pub struct MapView {
 }
 
 impl MapView {
-    pub fn new(settings: MapViewSettings) -> MapView {
-        MapView { settings }
+    pub fn new(settings: MapViewSettings) -> Self {
+        Self { settings }
     }
 
     pub fn draw<G: Graphics>(&self, controller: &MapController, c: &Context, g: &mut G) {

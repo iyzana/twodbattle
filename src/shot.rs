@@ -12,8 +12,8 @@ pub struct Shot {
 }
 
 impl Shot {
-    pub fn new(x: f64, y: f64, dx: f64, dy: f64, owner: String, lives: u32) -> Shot {
-        Shot {
+    pub fn new(x: f64, y: f64, dx: f64, dy: f64, owner: String, lives: u32) -> Self {
+        Self {
             x,
             y,
             w: 15.0,

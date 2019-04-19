@@ -5,8 +5,8 @@ use graphics::{Context, Graphics};
 pub struct ShotView {}
 
 impl ShotView {
-    pub fn new() -> ShotView {
-        ShotView::default()
+    pub fn new() -> Self {
+        Self::default()
     }
 
     pub fn draw<G: Graphics>(&self, controller: &ShotController, c: &Context, g: &mut G) {

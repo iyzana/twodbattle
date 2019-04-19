@@ -12,8 +12,8 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(name: String, x: f64, y: f64) -> Player {
-        Player {
+    pub fn new(name: String, x: f64, y: f64) -> Self {
+        Self {
             name,
             x,
             y,

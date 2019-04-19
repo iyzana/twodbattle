@@ -45,7 +45,7 @@ pub fn generate_map(width: u8, height: u8) -> Vec<Vec<bool>> {
 
         walls.push(wall);
 
-        if !valid_map(to_grid(&walls, width, height)) {
+        if !valid_map(&to_grid(&walls, width, height)) {
             walls.pop();
             continue;
         }
@@ -70,7 +70,7 @@ fn to_grid(walls: &[Wall], width: u8, height: u8) -> Vec<Vec<bool>> {
     grid
 }
 
-fn valid_map(grid: Vec<Vec<bool>>) -> bool {
+fn valid_map(grid: &[Vec<bool>]) -> bool {
     let width = grid.len();
     let height = grid[0].len();
     let mut jump_test_left: Vec<(usize, usize)> = vec![];
@@ -111,7 +111,7 @@ fn valid_map(grid: Vec<Vec<bool>>) -> bool {
 
     // reachability through jumping
     for (x, y) in jump_test_left {
-        if !jumpable(x, y, &grid, (x as i32 - 6).max(0) as usize..=x) {
+        if !jumpable(x, y, &grid, x.max(6) - 6..=x) {
             return false;
         }
     }
@@ -129,8 +129,8 @@ fn valid_map(grid: Vec<Vec<bool>>) -> bool {
     for y in 0..height {
         for (x, row) in grid.iter().enumerate() {
             if !row[y] {
-                open.push((x as i32, y as i32));
-                closed.insert((x as i32, y as i32));
+                open.push((x, y));
+                closed.insert((x, y));
                 break;
             }
         }
@@ -139,11 +139,12 @@ fn valid_map(grid: Vec<Vec<bool>>) -> bool {
         }
     }
 
+    // x and y can't be outside of grid, because of the border walls
     while let Some((x, y)) = open.pop() {
-        for neighbor in [(x - 1, y), (x, y - 1), (x + 1, y), (x, y + 1)].iter() {
+        for neighbor in &[(x - 1, y), (x, y - 1), (x + 1, y), (x, y + 1)] {
             let (nx, ny) = *neighbor;
 
-            if nx >= 0 && !grid[nx as usize][ny as usize] && !closed.contains(&(nx, ny)) {
+            if !grid[nx][ny] && !closed.contains(&(nx, ny)) {
                 open.push((nx, ny));
                 closed.insert((nx, ny));
             }
@@ -152,7 +153,7 @@ fn valid_map(grid: Vec<Vec<bool>>) -> bool {
 
     for y in 0..height {
         for (x, row) in grid.iter().enumerate() {
-            if !row[y] && !closed.contains(&(x as i32, y as i32)) {
+            if !row[y] && !closed.contains(&(x, y)) {
                 return false;
             }
         }
@@ -181,7 +182,7 @@ fn jumpable(x: usize, y: usize, grid: &[Vec<bool>], range: RangeInclusive<usize>
 struct Wall(u8, u8, u8, bool);
 
 impl Wall {
-    fn intersects(&self, other: &Wall) -> bool {
+    fn intersects(&self, other: &Self) -> bool {
         if self.3 {
             self.y() == other.y()
                 && !(self.x() < other.x() && self.x() + self.width() < other.x()

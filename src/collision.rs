@@ -6,7 +6,7 @@ pub enum Collision<'a, B: Bounds> {
     CORNER { cell: &'a B },
 }
 
-pub fn check_collision<'a, E: Bounds + Speed, B: Bounds + 'a>(
+pub fn check<'a, E: Bounds + Speed, B: Bounds + 'a>(
     e: &E,
     cells: &'a [B],
     dt: f64,
@@ -15,10 +15,10 @@ pub fn check_collision<'a, E: Bounds + Speed, B: Bounds + 'a>(
     let new_y = e.y() + e.dy() * dt;
 
     let moved_x = [new_x, e.y(), e.w(), e.h()];
-    let collides_x = cells.iter().find(|cell| collides(&moved_x, *cell));
+    let collides_x = cells.iter().find(|&cell| collides(&moved_x, cell));
 
     let moved_y = [e.x(), new_y, e.w(), e.h()];
-    let collides_y = cells.iter().find(|cell| collides(&moved_y, *cell));
+    let collides_y = cells.iter().find(|&cell| collides(&moved_y, cell));
 
     if collides_x.or(collides_y).is_some() {
         Some(Collision::SIDE {
@@ -29,7 +29,7 @@ pub fn check_collision<'a, E: Bounds + Speed, B: Bounds + 'a>(
         let moved_xy = [new_x, new_y, e.w(), e.h()];
         cells
             .iter()
-            .find(|cell| collides(&moved_xy, *cell))
+            .find(|&cell| collides(&moved_xy, cell))
             .map(|cell| Collision::CORNER { cell })
     }
 }

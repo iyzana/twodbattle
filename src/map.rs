@@ -11,12 +11,12 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new() -> Map {
+    pub fn new() -> Self {
         let width = 48;
         let height = 27;
         let cells = map_generator::generate_map(width, height);
 
-        Map {
+        Self {
             width,
             height,
             cells,
@@ -30,37 +30,32 @@ impl Map {
         )
     }
 
-    pub fn cell_at(&self, x: f64, y: f64) -> Cell {
-        let (gx, gy) = self.coords_at(x, y);
-        self.cell_at_grid(gx, gy)
-    }
-
-    fn cell_at_grid(&self, gx: usize, gy: usize) -> Cell {
-        let (cw, ch) = (
-            1920.0 / f64::from(self.width),
-            1080.0 / f64::from(self.height),
-        );
-        Cell {
-            x: gx as f64 * cw,
-            y: gy as f64 * ch,
-            w: cw,
-            h: ch,
-            state: self.cells[gx][gy],
+    fn cell_at_grid(&self, gx: usize, gy: usize) -> Option<Cell> {
+        if self.cells[gx][gy] {
+            let cw = 1920.0 / f64::from(self.width);
+            let ch = 1080.0 / f64::from(self.height);
+            Some(Cell {
+                x: gx as f64 * cw,
+                y: gy as f64 * ch,
+                w: cw,
+                h: ch,
+                state: self.cells[gx][gy],
+            })
+        } else {
+            None
         }
     }
 
     pub fn all_cells<'a>(&'a self) -> impl Iterator<Item = Cell> + 'a {
         (0..self.width as usize)
             .cartesian_product(0..self.height as usize)
-            .filter(move |(gx, gy)| self.cells[*gx][*gy])
-            .map(move |(gx, gy)| self.cell_at_grid(gx, gy))
+            .filter_map(move |(gx, gy)| self.cell_at_grid(gx, gy))
     }
 
     pub fn cells_around<'a>(&'a self, x: f64, y: f64) -> impl Iterator<Item = Cell> + 'a {
         let (gx, gy) = self.coords_at(x, y);
         (gx.max(1) - 1..(gx + 2).min(self.width as usize))
             .cartesian_product(gy.max(1) - 1..(gy + 2).min(self.height as usize))
-            .filter(move |(gx, gy)| self.cells[*gx][*gy])
-            .map(move |(gx, gy)| self.cell_at_grid(gx, gy))
+            .filter_map(move |(gx, gy)| self.cell_at_grid(gx, gy))
     }
 }
