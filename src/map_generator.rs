@@ -17,12 +17,14 @@ pub fn generate_map(width: u8, height: u8) -> Vec<Vec<bool>> {
     walls.push(Wall(0, 0, height, false));
     walls.push(Wall(width - 1, 0, height, false));
 
+    let x_distribution = Uniform::from(1..width - 1);
+    let y_distribution = Uniform::from(1..height - 1);
     let width_distribution = Uniform::from(min_width..max_width);
     let height_distribution = Uniform::from(min_height..max_height);
 
     while walls.len() < num_walls {
-        let x = rng.gen_range(1, width - 1);
-        let y = rng.gen_range(1, height - 1);
+        let x = x_distribution.sample(&mut rng);
+        let y = y_distribution.sample(&mut rng);
         let (size, horizontal) = if rng.gen::<f64>() < 0.7 {
             (width_distribution.sample(&mut rng), true)
         } else {
@@ -88,9 +90,13 @@ fn valid_map(grid: &[Vec<bool>]) -> bool {
                 // no 2x2 blocks
                 return false;
             }
+            // ..
+            // .#
             if !c.0 && !c.1 && !c.2 && c.3 {
                 jump_test_left.push((x, y));
             }
+            // ..
+            // #.
             if !c.0 && !c.1 && c.2 && !c.3 {
                 jump_test_right.push((x + 1, y));
             }
