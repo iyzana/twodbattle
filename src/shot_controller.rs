@@ -7,7 +7,6 @@ use piston::input::{mouse::MouseButton, Button, ButtonArgs, ButtonState, Generic
 pub struct ShotController {
     pub shots: Vec<Shot>,
     shoot: bool,
-    click: bool,
     mouse_pos: [f64; 2],
 }
 
@@ -78,9 +77,9 @@ impl ShotController {
         if self.shoot && player_controller.player.lives > 0 {
             let player_x = player_controller.player.x;
             let player_y = player_controller.player.y;
-            let dx = player_x - self.mouse_pos[0];
-            let dy = player_y - self.mouse_pos[1];
-            let angle = dy.atan2(dx);
+            let mouse_x = player_x - self.mouse_pos[0];
+            let mouse_y = player_y - self.mouse_pos[1];
+            let angle = mouse_y.atan2(mouse_x);
             let speed = 800.0;
             let spawn_dist = 20.0;
             self.shots.push(Shot::new(
@@ -97,16 +96,8 @@ impl ShotController {
     }
 
     fn on_input(&mut self, input: ButtonArgs) {
-        if Button::Mouse(MouseButton::Left) == input.button {
-            let pressed = input.state == ButtonState::Press;
-            if pressed {
-                if !self.click {
-                    self.shoot = true;
-                }
-            } else {
-                self.shoot = false;
-            }
-            self.click = pressed;
+        if input.button == Button::Mouse(MouseButton::Left) {
+            self.shoot = input.state == ButtonState::Press;
         }
     }
 }

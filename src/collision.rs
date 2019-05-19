@@ -34,6 +34,6 @@ pub fn check<'a, E: Bounds + Speed, B: Bounds + 'a>(
     }
 }
 
-fn collides<A: Bounds, B: Bounds>(a: &A, b: &B) -> bool {
+pub fn collides<A: Bounds, B: Bounds>(a: &A, b: &B) -> bool {
     a.x() < b.x() + b.w() && a.x() + a.w() > b.x() && a.y() < b.y() + b.h() && a.y() + a.h() > b.y()
 }

@@ -92,9 +92,11 @@ impl PlayerController {
                 }
             }
             Some(Collision::CORNER { cell }) => {
-                self.on_ground = true;
-                self.has_double_jump = true;
-                self.player.y = cell.y - self.player.height;
+                if self.player.dy > 0.0 {
+                    self.on_ground = true;
+                    self.has_double_jump = true;
+                    self.player.y = cell.y - self.player.height;
+                }
                 self.player.dx = 0.0;
                 self.player.dy = 0.0;
             }
@@ -104,46 +106,49 @@ impl PlayerController {
         }
 
         for shot in &mut shot_controller.shots {
-            if self.player.lives > 0 && Self::collides(self.player.bounds(), shot.bounds()) {
+            if self.player.lives > 0 && collision::collides(&self.player, shot) {
                 shot.lives = 0;
                 self.player.lives -= 1;
             }
         }
     }
 
-    fn collides(a: [f64; 4], b: [f64; 4]) -> bool {
-        a[0] < b[0] + b[2] && a[0] + a[2] > b[0] && a[1] < b[1] + b[3] && a[1] + a[3] > b[1]
-    }
-
     fn motion(&mut self, dt: f64) {
-        let Player { width, height, .. } = self.player;
+        let Player {
+            ref mut x,
+            ref mut y,
+            dx,
+            dy,
+            width,
+            height,
+            ..
+        } = self.player;
 
-        self.player.x += self.player.dx * dt;
-        self.player.y += self.player.dy * dt;
+        *x += dx * dt;
+        *y += dy * dt;
 
-        self.player.x = self.player.x.max(0.0).min(1920.0 - width);
-        self.player.y = self.player.y.max(0.0).min(1080.0 - height);
+        *x = x.max(0.0).min(1920.0 - width);
+        *y = y.max(0.0).min(1080.0 - height);
     }
 
     fn on_input(&mut self, input: ButtonArgs) {
-        if Button::Keyboard(Key::Space) == input.button {
-            let pressed = input.state == ButtonState::Press;
-            if pressed {
-                if !self.space {
+        match input.button {
+            Button::Keyboard(Key::Space) => {
+                if input.state != ButtonState::Press {
+                    self.jump = false;
+                } else if !self.space {
                     self.jump = true;
                 }
-            } else {
-                self.jump = false;
+
+                self.space = input.state == ButtonState::Press;
             }
-            self.space = pressed;
-        }
-
-        if Button::Keyboard(Key::A) == input.button {
-            self.left = input.state == ButtonState::Press;
-        }
-
-        if Button::Keyboard(Key::D) == input.button {
-            self.right = input.state == ButtonState::Press;
+            Button::Keyboard(Key::A) => {
+                self.left = input.state == ButtonState::Press;
+            }
+            Button::Keyboard(Key::D) => {
+                self.right = input.state == ButtonState::Press;
+            }
+            _ => {}
         }
     }
 }
