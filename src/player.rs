@@ -1,5 +1,14 @@
 use crate::entity::{Bounds, Speed};
 
+#[derive(Default)]
+pub struct Inputs {
+    pub left: bool,
+    pub right: bool,
+    pub jump: bool,
+    pub shoot: bool,
+    pub angle: f64,
+}
+
 pub struct Player {
     pub name: String,
     pub x: f64,
@@ -9,6 +18,10 @@ pub struct Player {
     pub dx: f64,
     pub dy: f64,
     pub lives: u8,
+
+    pub inputs: Inputs,
+    pub on_ground: bool,
+    pub has_double_jump: bool,
 }
 
 impl Player {
@@ -22,6 +35,9 @@ impl Player {
             dx: 0.0,
             dy: 0.0,
             lives: 20,
+            inputs: Inputs::default(),
+            on_ground: false,
+            has_double_jump: true,
         }
     }
 

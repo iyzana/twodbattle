@@ -19,6 +19,7 @@ pub use player_view::PlayerView;
 pub use shot::Shot;
 pub use shot_controller::ShotController;
 pub use shot_view::ShotView;
+use local_input_controller::LocalInputController;
 
 mod cell;
 mod collision;
@@ -33,6 +34,7 @@ mod player_view;
 mod shot;
 mod shot_controller;
 mod shot_view;
+mod local_input_controller;
 
 pub fn run() {
     let opengl = OpenGL::V3_3;
@@ -55,16 +57,20 @@ pub fn run() {
     let map_view = MapView::new(map_view_settings);
 
     let player = Player::new("succcubbus".to_string(), 50.0, 50.0);
+    let mut local_input_controller = LocalInputController::new(player.name.clone());
+
     let mut player_controller = PlayerController::new(player);
     let player_view = PlayerView::new();
 
     let mut shot_controller = ShotController::new();
     let shot_view = ShotView::new();
 
+
     while let Some(event) = events.next(&mut window) {
+        local_input_controller.event(&event, &mut player_controller);
         map_controller.event(&event);
         player_controller.event(&map_controller.map, &mut shot_controller, &event);
-        shot_controller.event(&map_controller.map, &player_controller, &event);
+        shot_controller.event(&map_controller.map, &mut player_controller, &event);
 
         if let Some(r) = event.render_args() {
             gl.draw(r.viewport(), |c, g| {

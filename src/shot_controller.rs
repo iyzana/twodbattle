@@ -1,13 +1,11 @@
 use crate::collision;
 use crate::collision::Collision;
 use crate::{Map, PlayerController, Shot};
-use piston::input::{mouse::MouseButton, Button, ButtonArgs, ButtonState, GenericEvent};
+use piston::input::GenericEvent;
 
 #[derive(Default)]
 pub struct ShotController {
     pub shots: Vec<Shot>,
-    shoot: bool,
-    mouse_pos: [f64; 2],
 }
 
 impl ShotController {
@@ -18,7 +16,7 @@ impl ShotController {
     pub fn event<E: GenericEvent>(
         &mut self,
         map: &Map,
-        player_controller: &PlayerController,
+        player_controller: &mut PlayerController,
         e: &E,
     ) {
         fn process_collision(shot: &mut Shot, map: &Map, dt: f64) {
@@ -63,41 +61,34 @@ impl ShotController {
                 motion(&mut shot, tick.dt);
             }
         }
-
-        if let Some(input) = e.button_args() {
-            self.on_input(input);
-        }
-
-        if let Some(mouse_pos) = e.mouse_cursor_args() {
-            self.mouse_pos = mouse_pos;
-        }
     }
 
-    fn update(&mut self, player_controller: &PlayerController) {
-        if self.shoot && player_controller.player.lives > 0 {
-            let player_x = player_controller.player.x;
-            let player_y = player_controller.player.y;
-            let mouse_x = player_x - self.mouse_pos[0];
-            let mouse_y = player_y - self.mouse_pos[1];
-            let angle = mouse_y.atan2(mouse_x);
-            let speed = 800.0;
-            let spawn_dist = 20.0;
-            self.shots.push(Shot::new(
-                player_x + spawn_dist * -angle.cos(),
-                player_y + spawn_dist * -angle.sin(),
-                speed * -angle.cos(),
-                speed * -angle.sin(),
-                player_controller.player.name.clone(),
-                5,
-            ));
+    fn update(&mut self, player_controller: &mut PlayerController) {
+        for player in &mut player_controller.players {
+            if player.lives == 0 {
+                continue;
+            }
 
-            self.shoot = false;
-        }
-    }
+            if player.inputs.shoot {
+                let player_x = player.x;
+                let player_y = player.y;
+                // let mouse_x = player_x - self.mouse_pos[0];
+                // let mouse_y = player_y - self.mouse_pos[1];
+                // let angle = mouse_y.atan2(mouse_x);
+                let angle = player.inputs.angle;
+                let speed = 800.0;
+                let spawn_dist = 20.0;
+                self.shots.push(Shot::new(
+                    player_x + spawn_dist * -angle.cos(),
+                    player_y + spawn_dist * -angle.sin(),
+                    speed * -angle.cos(),
+                    speed * -angle.sin(),
+                    player.name.clone(),
+                    5,
+                ));
 
-    fn on_input(&mut self, input: ButtonArgs) {
-        if input.button == Button::Mouse(MouseButton::Left) {
-            self.shoot = input.state == ButtonState::Press;
+                player.inputs.shoot = false;
+            }
         }
     }
 }
