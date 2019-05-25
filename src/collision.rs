@@ -7,18 +7,18 @@ pub enum Collision<'a, B: Bounds> {
 }
 
 pub fn check<'a, E: Bounds + Speed, B: Bounds + 'a>(
-    e: &E,
-    cells: &'a [B],
+    entity: &E,
+    obstacles: &'a [B],
     dt: f64,
 ) -> Option<Collision<'a, B>> {
-    let new_x = e.x() + e.dx() * dt;
-    let new_y = e.y() + e.dy() * dt;
+    let new_x = entity.x() + entity.dx() * dt;
+    let new_y = entity.y() + entity.dy() * dt;
 
-    let moved_x = [new_x, e.y(), e.w(), e.h()];
-    let collides_x = cells.iter().find(|&cell| collides(&moved_x, cell));
+    let moved_x = [new_x, entity.y(), entity.w(), entity.h()];
+    let collides_x = obstacles.iter().find(|&cell| collides(&moved_x, cell));
 
-    let moved_y = [e.x(), new_y, e.w(), e.h()];
-    let collides_y = cells.iter().find(|&cell| collides(&moved_y, cell));
+    let moved_y = [entity.x(), new_y, entity.w(), entity.h()];
+    let collides_y = obstacles.iter().find(|&cell| collides(&moved_y, cell));
 
     if collides_x.or(collides_y).is_some() {
         Some(Collision::SIDE {
@@ -26,8 +26,8 @@ pub fn check<'a, E: Bounds + Speed, B: Bounds + 'a>(
             y: collides_y,
         })
     } else {
-        let moved_xy = [new_x, new_y, e.w(), e.h()];
-        cells
+        let moved_xy = [new_x, new_y, entity.w(), entity.h()];
+        obstacles
             .iter()
             .find(|&cell| collides(&moved_xy, cell))
             .map(|cell| Collision::CORNER { cell })

@@ -57,9 +57,7 @@ pub fn generate_map(width: u8, height: u8) -> Vec<Vec<bool>> {
 }
 
 fn to_grid(walls: &[Wall], width: u8, height: u8) -> Vec<Vec<bool>> {
-    let mut grid: Vec<Vec<bool>> = (0..width)
-        .map(|_| (0..height).map(|_| false).collect())
-        .collect();
+    let mut grid = vec![vec![false; height as usize]; width as usize];
 
     for wall in walls {
         for x in wall.x()..wall.x() + wall.width() {
