@@ -64,7 +64,7 @@ impl ShotController {
     }
 
     fn update(&mut self, player_controller: &mut PlayerController) {
-        for player in &mut player_controller.players {
+        for player in player_controller.players.values_mut() {
             if player.lives == 0 {
                 continue;
             }

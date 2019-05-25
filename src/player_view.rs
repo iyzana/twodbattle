@@ -12,7 +12,7 @@ impl PlayerView {
     pub fn draw<G: Graphics>(&self, controller: &PlayerController, c: &Context, g: &mut G) {
         use graphics::*;
 
-        for player in &controller.players {
+        for player in controller.players.values() {
             let Player {
                 x,
                 y,

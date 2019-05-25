@@ -65,7 +65,6 @@ pub fn run() {
     let mut shot_controller = ShotController::new();
     let shot_view = ShotView::new();
 
-
     while let Some(event) = events.next(&mut window) {
         local_input_controller.event(&event, &mut player_controller);
         map_controller.event(&event);

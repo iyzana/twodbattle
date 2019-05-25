@@ -2,15 +2,19 @@ use crate::collision;
 use crate::collision::Collision;
 use crate::{Map, Player, ShotController};
 use piston::input::GenericEvent;
+use std::collections::HashMap;
 
 pub struct PlayerController {
-    pub players: Vec<Player>,
+    pub players: HashMap<String, Player>,
 }
 
 impl PlayerController {
     pub fn new(player: Player) -> Self {
+        let mut players = HashMap::new();
+        players.insert(player.name.clone(), player);
+
         Self {
-            players: vec![player],
+            players,
         }
     }
 
@@ -21,7 +25,7 @@ impl PlayerController {
         e: &E,
     ) {
         if let Some(tick) = e.update_args() {
-            for player in &mut self.players {
+            for player in self.players.values_mut() {
                 if player.lives == 0 {
                     continue;
                 }
