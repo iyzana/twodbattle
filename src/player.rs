@@ -6,7 +6,8 @@ pub struct Inputs {
     pub right: bool,
     pub jump: bool,
     pub shoot: bool,
-    pub angle: f64,
+    pub mouse_x: f64,
+    pub mouse_y: f64,
 }
 
 pub struct Player {

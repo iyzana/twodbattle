@@ -72,10 +72,9 @@ impl ShotController {
             if player.inputs.shoot {
                 let player_x = player.x;
                 let player_y = player.y;
-                // let mouse_x = player_x - self.mouse_pos[0];
-                // let mouse_y = player_y - self.mouse_pos[1];
-                // let angle = mouse_y.atan2(mouse_x);
-                let angle = player.inputs.angle;
+                let mouse_x = player_x - player.inputs.mouse_x;
+                let mouse_y = player_y - player.inputs.mouse_y;
+                let angle = mouse_y.atan2(mouse_x);
                 let speed = 800.0;
                 let spawn_dist = 20.0;
                 self.shots.push(Shot::new(

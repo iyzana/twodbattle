@@ -48,9 +48,8 @@ impl LocalInputController {
         }
 
         if let Some(mouse_pos) = e.mouse_cursor_args() {
-            let mouse_x = player.x - mouse_pos[0];
-            let mouse_y = player.y - mouse_pos[1];
-            player.inputs.angle = mouse_y.atan2(mouse_x);
+            player.inputs.mouse_x = mouse_pos[0];
+            player.inputs.mouse_y = mouse_pos[1];
         }
     }
 }
