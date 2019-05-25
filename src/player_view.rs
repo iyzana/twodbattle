@@ -16,6 +16,7 @@ impl PlayerView {
             let Player {
                 x,
                 y,
+                color,
                 width,
                 height,
                 lives,
@@ -26,7 +27,8 @@ impl PlayerView {
                 return;
             }
 
-            let color = [f32::from(lives) / 20.0, 0.0, 0.0, 1.0];
+            let mut color = color;
+            color[3] = f32::from(lives) / 20.0;
             let border_color = [1.0, 0.0, 0.0, 1.0];
             let coords = [x, y, width, height];
 

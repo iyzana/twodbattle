@@ -1,6 +1,7 @@
 use crate::entity::{Bounds, Speed};
+use serde::{Serialize, Deserialize};
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct Inputs {
     pub left: bool,
     pub right: bool,
@@ -16,6 +17,7 @@ pub struct Player {
     pub y: f64,
     pub width: f64,
     pub height: f64,
+    pub color: [f32; 4],
     pub dx: f64,
     pub dy: f64,
     pub lives: u8,
@@ -26,13 +28,14 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(name: String, x: f64, y: f64) -> Self {
+    pub fn new(name: String, x: f64, y: f64, color: [f32; 4]) -> Self {
         Self {
             name,
             x,
             y,
             width: 20.0,
             height: 20.0,
+            color,
             dx: 0.0,
             dy: 0.0,
             lives: 20,
