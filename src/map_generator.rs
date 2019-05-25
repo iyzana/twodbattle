@@ -12,45 +12,60 @@ pub fn generate_map(width: u8, height: u8) -> Vec<Vec<bool>> {
     let min_height = (f64::from(height) * 0.3) as u8;
     let max_height = (f64::from(height) * 0.5) as u8;
 
-    walls.push(Wall(0, 0, width, true));
-    walls.push(Wall(0, height - 1, width, true));
-    walls.push(Wall(0, 0, height, false));
-    walls.push(Wall(width - 1, 0, height, false));
-
     let x_distribution = Uniform::from(1..width - 1);
     let y_distribution = Uniform::from(1..height - 1);
     let width_distribution = Uniform::from(min_width..max_width);
     let height_distribution = Uniform::from(min_height..max_height);
 
-    while walls.len() < num_walls {
-        let x = x_distribution.sample(&mut rng);
-        let y = y_distribution.sample(&mut rng);
-        let (size, horizontal) = if rng.gen::<f64>() < 0.7 {
-            (width_distribution.sample(&mut rng), true)
-        } else {
-            (height_distribution.sample(&mut rng), false)
-        };
-        let wall = Wall(x, y, size, horizontal);
+    loop {
+        walls.push(Wall(0, 0, width, true));
+        walls.push(Wall(0, height - 1, width, true));
+        walls.push(Wall(0, 0, height, false));
+        walls.push(Wall(width - 1, 0, height, false));
 
-        if x + wall.width() > width || y + wall.height() > height {
-            continue;
+        let mut tries = 0;
+        while walls.len() < num_walls {
+            if tries > 500 {
+                break;
+            }
+
+            let x = x_distribution.sample(&mut rng);
+            let y = y_distribution.sample(&mut rng);
+            let (size, horizontal) = if rng.gen::<f64>() < 0.7 {
+                (width_distribution.sample(&mut rng), true)
+            } else {
+                (height_distribution.sample(&mut rng), false)
+            };
+            let wall = Wall(x, y, size, horizontal);
+
+            if x + wall.width() > width || y + wall.height() > height {
+                continue;
+            }
+
+            let intersects = walls
+                .iter()
+                .filter(|other| other.3 == wall.3)
+                .any(|other| other.intersects(&wall));
+
+            if intersects {
+                tries += 1;
+                continue;
+            }
+
+            walls.push(wall);
+
+            if !valid_map(&to_grid(&walls, width, height)) {
+                tries += 1;
+                walls.pop();
+                continue;
+            }
         }
 
-        let intersects = walls
-            .iter()
-            .filter(|other| other.3 == wall.3)
-            .any(|other| other.intersects(&wall));
-
-        if intersects {
-            continue;
+        if tries <= 500 {
+            break;
         }
 
-        walls.push(wall);
-
-        if !valid_map(&to_grid(&walls, width, height)) {
-            walls.pop();
-            continue;
-        }
+        walls.clear();
     }
 
     to_grid(&walls, width, height)
@@ -99,6 +114,11 @@ fn valid_map(grid: &[Vec<bool>]) -> bool {
                 jump_test_right.push((x + 1, y));
             }
         }
+    }
+
+    // limit stalactites to 3
+    if (0..width).filter(|&x| grid[x][1]).count() > 5 {
+        return false;
     }
 
     for x in 0..width {
@@ -170,7 +190,7 @@ fn jumpable(x: usize, y: usize, grid: &[Vec<bool>], range: RangeInclusive<usize>
     let mut lowest = 10000;
     for tx in range {
         if grid[tx][y] {
-            break;
+            return false;
         }
 
         let mut bottom = y + 1 + (x as i32 - tx as i32).abs() as usize / 2;

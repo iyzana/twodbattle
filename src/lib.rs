@@ -6,6 +6,7 @@ extern crate piston;
 extern crate rand;
 
 use glutin_window::GlutinWindow;
+use local_input_controller::LocalInputController;
 pub use map::Map;
 pub use map_controller::MapController;
 pub use map_view::{MapView, MapViewSettings};
@@ -19,11 +20,11 @@ pub use player_view::PlayerView;
 pub use shot::Shot;
 pub use shot_controller::ShotController;
 pub use shot_view::ShotView;
-use local_input_controller::LocalInputController;
 
 mod cell;
 mod collision;
 mod entity;
+mod local_input_controller;
 mod map;
 mod map_controller;
 mod map_generator;
@@ -34,7 +35,6 @@ mod player_view;
 mod shot;
 mod shot_controller;
 mod shot_view;
-mod local_input_controller;
 
 pub fn run() {
     let opengl = OpenGL::V3_3;

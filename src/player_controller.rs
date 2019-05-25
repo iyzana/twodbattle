@@ -13,9 +13,7 @@ impl PlayerController {
         let mut players = HashMap::new();
         players.insert(player.name.clone(), player);
 
-        Self {
-            players,
-        }
+        Self { players }
     }
 
     pub fn event<E: GenericEvent>(
@@ -109,20 +107,9 @@ impl PlayerController {
     }
 
     fn motion(player: &mut Player, dt: f64) {
-        let Player {
-            x,
-            y,
-            dx,
-            dy,
-            width,
-            height,
-            ..
-        } = player;
+        let Player { x, y, dx, dy, .. } = player;
 
         *x += *dx * dt;
         *y += *dy * dt;
-
-        *x = x.max(0.0).min(1920.0 - *width);
-        *y = y.max(0.0).min(1080.0 - *height);
     }
 }

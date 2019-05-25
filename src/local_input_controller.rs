@@ -16,9 +16,7 @@ impl LocalInputController {
     }
 
     pub fn event<E: GenericEvent>(&mut self, e: &E, player_controller: &mut PlayerController) {
-        let player = player_controller
-            .players
-            .get_mut(&self.local_player);
+        let player = player_controller.players.get_mut(&self.local_player);
 
         let player = match player {
             Some(p) => p,
