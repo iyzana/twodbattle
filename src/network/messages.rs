@@ -3,21 +3,21 @@ use serde::{Serialize, Deserialize};
 use std::net::SocketAddr;
 use crate::player::State;
 
-pub struct Input {
-    pub message: InputMessage,
+pub struct ServerBound {
+    pub message: ServerBoundMessage,
     pub player_name: Option<String>,
     pub source: SocketAddr,
 }
 
 #[derive(Deserialize)]
-pub enum InputMessage {
+pub enum ServerBoundMessage {
     SetName(String),
     UpdateInputs(player::Inputs),
     Disconnect,
 }
 
 #[derive(Serialize)]
-pub enum OutputMessage {
+pub enum ClientBoundMessage {
     NameRejected,
     NameAccepted,
     PlayerUpdate(State),

@@ -12,7 +12,7 @@ use std::thread;
 
 pub struct HostController {
     players: Arc<Mutex<HashMap<SocketAddr, String>>>,
-    unprocessed_inputs: Arc<Mutex<Vec<Input>>>,
+    unprocessed_inputs: Arc<Mutex<Vec<ServerBound>>>,
     tx: Sender<Packet>,
 }
 
@@ -29,7 +29,7 @@ impl HostController {
                 match rx.recv() {
                     Ok(SocketEvent::Packet(packet)) => {
                         let player_name = players.lock().unwrap().get(&packet.addr()).cloned();
-                        unprocessed_inputs.lock().unwrap().push(Input {
+                        unprocessed_inputs.lock().unwrap().push(ServerBound {
                             message: bincode::deserialize(packet.payload()).unwrap(),
                             player_name,
                             source: packet.addr(),
@@ -69,7 +69,7 @@ impl HostController {
                 .for_each(|packet| Self::process(packet, &mut players, player_controller, tx));
 
             for player in player_controller.players.values() {
-                let msg = OutputMessage::PlayerUpdate(player.state.clone());
+                let msg = ClientBoundMessage::PlayerUpdate(player.state.clone());
                 for socket in players.keys() {
                     let packet = Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
                     tx.send(packet).unwrap();
@@ -79,22 +79,22 @@ impl HostController {
     }
 
     fn process(
-        packet: Input,
+        packet: ServerBound,
         players: &mut HashMap<SocketAddr, String>,
         player_controller: &mut PlayerController,
         tx: &mut Sender<Packet>,
     ) {
         let player = Self::get_player(packet.player_name, player_controller);
         match packet.message {
-            InputMessage::SetName(name) => {
+            ServerBoundMessage::SetName(name) => {
                 Self::set_name(name, packet.source, players, player_controller, tx);
             }
-            InputMessage::UpdateInputs(inputs) => {
+            ServerBoundMessage::UpdateInputs(inputs) => {
                 if let Some(player) = player {
                     player.inputs = inputs;
                 }
             }
-            InputMessage::Disconnect => {}
+            ServerBoundMessage::Disconnect => {}
         }
     }
 
@@ -111,14 +111,14 @@ impl HostController {
             .any(|exisiting_name| name == *exisiting_name)
         {
             // nope
-            OutputMessage::NameRejected
+            ClientBoundMessage::NameRejected
         } else {
             players.insert(source, name.clone());
             player_controller.players.insert(
                 name.clone(),
                 Player::new(name, 100.0, 100.0, [0.0, 1.0, 1.0, 1.0]),
             );
-            OutputMessage::NameAccepted
+            ClientBoundMessage::NameAccepted
         };
 
         let packet = Packet::reliable_unordered(source, bincode::serialize(&response).unwrap());
