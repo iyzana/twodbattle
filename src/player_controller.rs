@@ -1,6 +1,7 @@
 use crate::collision;
 use crate::collision::Collision;
 use crate::{Map, Player, ShotController};
+use crate::player;
 use piston::input::GenericEvent;
 use std::collections::HashMap;
 
@@ -11,7 +12,7 @@ pub struct PlayerController {
 impl PlayerController {
     pub fn new(player: Player) -> Self {
         let mut players = HashMap::new();
-        players.insert(player.name.clone(), player);
+        players.insert(player.state.name.clone(), player);
 
         Self { players }
     }
@@ -24,7 +25,7 @@ impl PlayerController {
     ) {
         if let Some(tick) = e.update_args() {
             for player in self.players.values_mut() {
-                if player.lives == 0 {
+                if player.state.lives == 0 {
                     continue;
                 }
 
@@ -38,25 +39,25 @@ impl PlayerController {
     fn update(player: &mut Player, dt: f64) {
         let speed = 300.0;
         if player.inputs.left && !player.inputs.right {
-            player.dx = player.dx.min(-speed);
+            player.state.dx = player.state.dx.min(-speed);
         } else if !player.inputs.left && player.inputs.right {
-            player.dx = player.dx.max(speed);
+            player.state.dx = player.state.dx.max(speed);
         } else {
             let friction = if player.on_ground { 16.0 } else { 4.0 };
-            player.dx -= player.dx * friction * dt;
+            player.state.dx -= player.state.dx * friction * dt;
         }
 
         if player.inputs.jump && (player.on_ground || player.has_double_jump) {
             player.inputs.jump = false;
 
             if player.on_ground {
-                player.dy = player.dy.min(-805.0);
+                player.state.dy = player.state.dy.min(-805.0);
             } else {
                 player.has_double_jump = false;
-                player.dy = player.dy.min(-405.0);
+                player.state.dy = player.state.dy.min(-405.0);
             }
         } else {
-            player.dy += 1000.0 * dt;
+            player.state.dy += 1000.0 * dt;
         }
     }
 
@@ -70,28 +71,28 @@ impl PlayerController {
         match collision::check(player, &cells, dt) {
             Some(Collision::SIDE { x, y }) => {
                 if x.is_some() {
-                    player.dx = 0.0;
+                    player.state.dx = 0.0;
                 }
                 if let Some(cell) = y {
-                    if player.dy > 0.0 {
-                        player.y = cell.y - player.height;
+                    if player.state.dy > 0.0 {
+                        player.state.y = cell.y - player.state.height;
                         player.on_ground = true;
                         player.has_double_jump = true;
                     }
 
-                    player.dy = 0.0;
+                    player.state.dy = 0.0;
                 } else {
                     player.on_ground = false;
                 }
             }
             Some(Collision::CORNER { cell }) => {
-                if player.dy > 0.0 {
+                if player.state.dy > 0.0 {
                     player.on_ground = true;
                     player.has_double_jump = true;
-                    player.y = cell.y - player.height;
+                    player.state.y = cell.y - player.state.height;
                 }
-                player.dx = 0.0;
-                player.dy = 0.0;
+                player.state.dx = 0.0;
+                player.state.dy = 0.0;
             }
             _ => {
                 player.on_ground = false;
@@ -99,15 +100,15 @@ impl PlayerController {
         }
 
         for shot in &mut shot_controller.shots {
-            if player.lives > 0 && collision::collides(player, shot) {
+            if player.state.lives > 0 && collision::collides(player, shot) {
                 shot.lives = 0;
-                player.lives -= 1;
+                player.state.lives -= 1;
             }
         }
     }
 
     fn motion(player: &mut Player, dt: f64) {
-        let Player { x, y, dx, dy, .. } = player;
+        let player::State { x, y, dx, dy, .. } = &mut player.state;
 
         *x += *dx * dt;
         *y += *dy * dt;

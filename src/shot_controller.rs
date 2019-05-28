@@ -65,13 +65,13 @@ impl ShotController {
 
     fn update(&mut self, player_controller: &mut PlayerController) {
         for player in player_controller.players.values_mut() {
-            if player.lives == 0 {
+            if player.state.lives == 0 {
                 continue;
             }
 
             if player.inputs.shoot {
-                let player_x = player.x;
-                let player_y = player.y;
+                let player_x = player.state.x;
+                let player_y = player.state.y;
                 let mouse_x = player_x - player.inputs.mouse_x;
                 let mouse_y = player_y - player.inputs.mouse_y;
                 let angle = mouse_y.atan2(mouse_x);
@@ -82,7 +82,7 @@ impl ShotController {
                     player_y + spawn_dist * -angle.sin(),
                     speed * -angle.cos(),
                     speed * -angle.sin(),
-                    player.name.clone(),
+                    player.state.name.clone(),
                     5,
                 ));
 

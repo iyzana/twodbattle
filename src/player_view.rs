@@ -1,5 +1,6 @@
-use crate::{Player, PlayerController};
+use crate::PlayerController;
 use graphics::{Context, Graphics};
+use crate::player;
 
 #[derive(Default)]
 pub struct PlayerView {}
@@ -13,7 +14,7 @@ impl PlayerView {
         use graphics::*;
 
         for player in controller.players.values() {
-            let Player {
+            let player::State {
                 x,
                 y,
                 color,
@@ -21,7 +22,7 @@ impl PlayerView {
                 height,
                 lives,
                 ..
-            } = *player;
+            } = player.state;
 
             if lives == 0 {
                 return;

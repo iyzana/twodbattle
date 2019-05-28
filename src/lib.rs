@@ -5,7 +5,7 @@ extern crate opengl_graphics;
 extern crate piston;
 extern crate rand;
 
-mod network_host_controller;
+mod network;
 mod cell;
 mod collision;
 mod entity;
@@ -36,7 +36,7 @@ pub use player_view::PlayerView;
 pub use shot::Shot;
 pub use shot_controller::ShotController;
 pub use shot_view::ShotView;
-use network_host_controller::NetworkHostController;
+use network::HostController;
 
 pub fn run() {
     let opengl = OpenGL::V3_3;
@@ -59,7 +59,7 @@ pub fn run() {
     let map_view = MapView::new(map_view_settings);
 
     let player = Player::new("succcubbus".to_string(), 50.0, 50.0, [1.0, 0.0, 0.0, 1.0]);
-    let mut local_input_controller = LocalInputController::new(player.name.clone());
+    let mut local_input_controller = LocalInputController::new(player.state.name.clone());
 
     let mut player_controller = PlayerController::new(player);
     let player_view = PlayerView::new();
@@ -67,7 +67,7 @@ pub fn run() {
     let mut shot_controller = ShotController::new();
     let shot_view = ShotView::new();
 
-    let mut network_host_controller = NetworkHostController::listen("[::1]:62304").unwrap();
+    let mut network_host_controller = HostController::listen("[::1]:62304").unwrap();
 
     while let Some(event) = events.next(&mut window) {
         local_input_controller.event(&event, &mut player_controller);
