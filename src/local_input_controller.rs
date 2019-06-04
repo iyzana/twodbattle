@@ -3,7 +3,7 @@ use piston::input::{Button, ButtonState, GenericEvent, Key, MouseButton};
 
 #[derive(Default)]
 pub struct LocalInputController {
-    local_player: String,
+    pub local_player: String,
     space: bool,
 }
 

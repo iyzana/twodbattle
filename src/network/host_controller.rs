@@ -10,6 +10,12 @@ use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::{Arc, Mutex};
 use std::thread;
 
+pub struct ServerBound {
+    pub message: ServerBoundMessage,
+    pub player_name: Option<String>,
+    pub source: SocketAddr,
+}
+
 pub struct HostController {
     players: Arc<Mutex<HashMap<SocketAddr, String>>>,
     unprocessed_inputs: Arc<Mutex<Vec<ServerBound>>>,
@@ -105,22 +111,20 @@ impl HostController {
         player_controller: &mut PlayerController,
         tx: &mut Sender<Packet>,
     ) {
-        let response = if player_controller
+        let accepted = !player_controller
             .players
             .keys()
-            .any(|exisiting_name| name == *exisiting_name)
-        {
-            // nope
-            ClientBoundMessage::NameRejected
-        } else {
+            .any(|exisiting_name| name == *exisiting_name);
+
+        if accepted {
             players.insert(source, name.clone());
             player_controller.players.insert(
                 name.clone(),
                 Player::new(name, 100.0, 100.0, [0.0, 1.0, 1.0, 1.0]),
             );
-            ClientBoundMessage::NameAccepted
-        };
+        }
 
+        let response = ClientBoundMessage::SetNameResponse { accepted };
         let packet = Packet::reliable_unordered(source, bincode::serialize(&response).unwrap());
         tx.send(packet).unwrap();
     }

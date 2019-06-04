@@ -21,6 +21,7 @@ mod shot;
 mod shot_controller;
 mod shot_view;
 
+use std::env;
 use glutin_window::GlutinWindow;
 use local_input_controller::LocalInputController;
 pub use map::Map;
@@ -37,6 +38,7 @@ pub use shot::Shot;
 pub use shot_controller::ShotController;
 pub use shot_view::ShotView;
 use network::HostController;
+use network::ClientController;
 
 pub fn run() {
     let opengl = OpenGL::V3_3;
@@ -67,14 +69,23 @@ pub fn run() {
     let mut shot_controller = ShotController::new();
     let shot_view = ShotView::new();
 
-    let mut network_host_controller = HostController::listen("[::1]:62304").unwrap();
+    let (mut host, mut client) = if env::args().nth(1) == Some(String::from("--host")) {
+        (Some(HostController::listen("[::1]:62304").unwrap()), None)
+    } else {
+        (None, Some(ClientController::connect("[::1]:62304".parse().unwrap(), "[::1]:0".parse().unwrap()).unwrap()))
+    };
 
     while let Some(event) = events.next(&mut window) {
-        local_input_controller.event(&event, &mut player_controller);
-        map_controller.event(&event);
-        player_controller.event(&map_controller.map, &mut shot_controller, &event);
-        shot_controller.event(&map_controller.map, &mut player_controller, &event);
-        network_host_controller.event(&event, &mut player_controller);
+        if let Some(client) = client.as_mut() {
+            local_input_controller.event(&event, &mut player_controller);
+            client.event(&event, &mut player_controller, &mut local_input_controller);
+        }
+        if let Some(host) = host.as_mut() {
+            map_controller.event(&event);
+            player_controller.event(&map_controller.map, &mut shot_controller, &event);
+            shot_controller.event(&map_controller.map, &mut player_controller, &event);
+            host.event(&event, &mut player_controller);
+        }
 
         if let Some(r) = event.render_args() {
             gl.draw(r.viewport(), |c, g| {

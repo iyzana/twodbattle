@@ -1,24 +1,16 @@
 use crate::player;
 use serde::{Serialize, Deserialize};
 use std::net::SocketAddr;
-use crate::player::State;
 
-pub struct ServerBound {
-    pub message: ServerBoundMessage,
-    pub player_name: Option<String>,
-    pub source: SocketAddr,
-}
-
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub enum ServerBoundMessage {
     SetName(String),
     UpdateInputs(player::Inputs),
     Disconnect,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize)]
 pub enum ClientBoundMessage {
-    NameRejected,
-    NameAccepted,
-    PlayerUpdate(State),
+    SetNameResponse { accepted: bool },
+    PlayerUpdate(player::State),
 }
