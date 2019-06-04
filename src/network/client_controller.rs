@@ -61,6 +61,7 @@ impl ClientController {
     pub fn event<E: GenericEvent>(&mut self, e: &E, player_controller: &mut PlayerController, local_input_controller: &mut LocalInputController) {
         if e.update_args().is_some() {
             let Self {
+                host,
                 unprocessed_inputs,
                 tx,
                 ..
@@ -70,7 +71,7 @@ impl ClientController {
 
             unprocessed_inputs
                 .drain(..)
-                .for_each(|packet| Self::process(packet, player_controller, tx));
+                .for_each(|packet| Self::process(&host, packet, player_controller, tx));
 
             let player = &player_controller.players[&local_input_controller.local_player];
             let msg = ClientBoundMessage::PlayerUpdate(player.state.clone());
@@ -80,15 +81,34 @@ impl ClientController {
     }
 
     fn process(
+        host: &SocketAddr,
         packet: ClientBound,
         player_controller: &mut PlayerController,
         tx: &mut Sender<Packet>,
     ) {
         match packet.message {
             ClientBoundMessage::SetNameResponse { accepted } => {
-
+                if !accepted {
+                    Self::set_name(host, String::from("noname"), tx);
+                }
             }
-            ClientBoundMessage::PlayerUpdate(state) => {}
+            ClientBoundMessage::PlayerUpdate(state) => {
+                // todo create new player if not found
+                if let Some(player) = player_controller.players.get_mut(&state.name) {
+                    player.state = state;
+                }
+            }
         }
     }
+
+    fn set_name(
+        host: &SocketAddr,
+        name: String,
+        tx: &mut Sender<Packet>,
+    ) {
+        let msg = ServerBoundMessage::SetName(name);
+        let packet = Packet::reliable_unordered(*host, bincode::serialize(&msg).unwrap());
+        tx.send(packet).unwrap();
+    }
+
 }
