@@ -19,6 +19,7 @@ failure = "0.1.5"
 serde = { version = "1.0.91", features = ["derive"] }
 bincode = "1.1.4"
 crossbeam = "0.7.1"
+clap = "2.33.0"
 
 [profile.release]
 debug = true

@@ -34,14 +34,19 @@ impl HostController {
             thread::spawn(move || loop {
                 match rx.recv() {
                     Ok(SocketEvent::Packet(packet)) => {
+                        println!("got packet");
                         let player_name = players.lock().unwrap().get(&packet.addr()).cloned();
+                        let msg = bincode::deserialize(packet.payload()).unwrap();
+                        println!("decoded message {:?}", msg);
                         unprocessed_inputs.lock().unwrap().push(ServerBound {
-                            message: bincode::deserialize(packet.payload()).unwrap(),
+                            message: msg,
                             player_name,
                             source: packet.addr(),
                         });
                     }
-                    Ok(SocketEvent::Connect(addr)) => {}
+                    Ok(SocketEvent::Connect(addr)) => {
+                        println!("{} connected", addr);
+                    }
                     _ => {}
                 }
             });
@@ -77,7 +82,8 @@ impl HostController {
             for player in player_controller.players.values() {
                 let msg = ClientBoundMessage::PlayerUpdate(player.state.clone());
                 for socket in players.keys() {
-                    let packet = Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
+                    let packet =
+                        Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
                     tx.send(packet).unwrap();
                 }
             }

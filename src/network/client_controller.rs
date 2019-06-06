@@ -1,7 +1,7 @@
 use crate::network::messages::*;
 use crate::player::Player;
-use crate::PlayerController;
 use crate::LocalInputController;
+use crate::PlayerController;
 use bincode;
 use crossbeam::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
@@ -24,7 +24,7 @@ pub struct ClientController {
 
 impl ClientController {
     pub fn connect(host: SocketAddr, local: SocketAddr) -> Result<Self, ErrorKind> {
-        let (mut socket, tx, rx) = Socket::bind(local)?;
+        let (mut socket, mut tx, rx) = Socket::bind(local)?;
         let unprocessed_inputs = Arc::new(Mutex::new(vec![]));
 
         {
@@ -51,6 +51,8 @@ impl ClientController {
             socket.start_polling().unwrap();
         });
 
+        Self::set_name(&host, String::from("client"), &mut tx);
+
         Ok(Self {
             host,
             unprocessed_inputs,
@@ -58,7 +60,12 @@ impl ClientController {
         })
     }
 
-    pub fn event<E: GenericEvent>(&mut self, e: &E, player_controller: &mut PlayerController, local_input_controller: &mut LocalInputController) {
+    pub fn event<E: GenericEvent>(
+        &mut self,
+        e: &E,
+        player_controller: &mut PlayerController,
+        local_input_controller: &mut Option<LocalInputController>,
+    ) {
         if e.update_args().is_some() {
             let Self {
                 host,
@@ -73,10 +80,14 @@ impl ClientController {
                 .drain(..)
                 .for_each(|packet| Self::process(&host, packet, player_controller, tx));
 
-            let player = &player_controller.players[&local_input_controller.local_player];
-            let msg = ClientBoundMessage::PlayerUpdate(player.state.clone());
-            let packet = Packet::reliable_unordered(self.host, bincode::serialize(&msg).unwrap());
-            tx.send(packet).unwrap();
+            if let Some(local_input_controller) = local_input_controller.as_mut() {
+                let player = &player_controller.players[&local_input_controller.local_player];
+                let msg = ServerBoundMessage::UpdateInputs(player.inputs.clone());
+                println!("sending msg {:?}", msg);
+                let packet =
+                    Packet::reliable_unordered(self.host, bincode::serialize(&msg).unwrap());
+                tx.send(packet).unwrap();
+            }
         }
     }
 
@@ -95,20 +106,20 @@ impl ClientController {
             ClientBoundMessage::PlayerUpdate(state) => {
                 // todo create new player if not found
                 if let Some(player) = player_controller.players.get_mut(&state.name) {
+                    println!("overriding player state: {:?}", state);
                     player.state = state;
+                } else {
+                    let mut player = Player::new(state.name.clone(), 50.0, 50.0, [0.0, 1.0, 0.0, 1.0]);
+                    player.state = state;
+                    player_controller.players.insert(player.state.name.clone(), player);
                 }
             }
         }
     }
 
-    fn set_name(
-        host: &SocketAddr,
-        name: String,
-        tx: &mut Sender<Packet>,
-    ) {
+    fn set_name(host: &SocketAddr, name: String, tx: &mut Sender<Packet>) {
         let msg = ServerBoundMessage::SetName(name);
         let packet = Packet::reliable_unordered(*host, bincode::serialize(&msg).unwrap());
         tx.send(packet).unwrap();
     }
-
 }

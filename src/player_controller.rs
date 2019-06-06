@@ -1,7 +1,7 @@
 use crate::collision;
 use crate::collision::Collision;
-use crate::{Map, Player, ShotController};
 use crate::player;
+use crate::{Map, Player, ShotController};
 use piston::input::GenericEvent;
 use std::collections::HashMap;
 
@@ -10,11 +10,10 @@ pub struct PlayerController {
 }
 
 impl PlayerController {
-    pub fn new(player: Player) -> Self {
-        let mut players = HashMap::new();
-        players.insert(player.state.name.clone(), player);
-
-        Self { players }
+    pub fn new() -> Self {
+        Self {
+            players: HashMap::new(),
+        }
     }
 
     pub fn event<E: GenericEvent>(

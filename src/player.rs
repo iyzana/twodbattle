@@ -1,7 +1,7 @@
 use crate::entity::{Bounds, Speed};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct State {
     pub name: String,
     pub x: f64,
@@ -14,7 +14,7 @@ pub struct State {
     pub lives: u8,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct Inputs {
     pub left: bool,
     pub right: bool,
@@ -24,6 +24,7 @@ pub struct Inputs {
     pub mouse_y: f64,
 }
 
+#[derive(Debug)]
 pub struct Player {
     pub state: State,
     pub inputs: Inputs,
@@ -52,7 +53,12 @@ impl Player {
     }
 
     pub fn bounds(&self) -> [f64; 4] {
-        [self.state.x, self.state.y, self.state.width, self.state.height]
+        [
+            self.state.x,
+            self.state.y,
+            self.state.width,
+            self.state.height,
+        ]
     }
 }
 

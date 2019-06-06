@@ -1,6 +1,6 @@
+use crate::player;
 use crate::PlayerController;
 use graphics::{Context, Graphics};
-use crate::player;
 
 #[derive(Default)]
 pub struct PlayerView {}
