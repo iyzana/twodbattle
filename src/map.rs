@@ -1,9 +1,10 @@
 use crate::cell::Cell;
 use crate::map_generator;
 use itertools::Itertools;
+use serde::{Deserialize, Serialize};
 use std::iter::Iterator;
 
-#[derive(Default)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
 pub struct Map {
     pub width: u8,
     pub height: u8,

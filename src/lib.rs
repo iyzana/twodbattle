@@ -130,13 +130,18 @@ pub fn run() {
             local_input_controller.event(&event, &mut player_controller);
         }
         if let Some(client) = client.as_mut() {
-            client.event(&event, &mut player_controller, &mut local_input_controller);
+            client.event(
+                &event,
+                &mut player_controller,
+                &mut map_controller,
+                &mut local_input_controller,
+            );
         }
         if let Some(host) = host.as_mut() {
             map_controller.event(&event);
             player_controller.event(&map_controller.map, &mut shot_controller, &event);
             shot_controller.event(&map_controller.map, &mut player_controller, &event);
-            host.event(&event, &mut player_controller);
+            host.event(&event, &mut player_controller, &mut map_controller);
         }
 
         if let Some(r) = event.render_args() {

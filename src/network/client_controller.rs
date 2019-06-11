@@ -1,6 +1,7 @@
 use crate::network::messages::*;
 use crate::player::Player;
 use crate::LocalInputController;
+use crate::MapController;
 use crate::PlayerController;
 use bincode;
 use crossbeam::Sender;
@@ -64,6 +65,7 @@ impl ClientController {
         &mut self,
         e: &E,
         player_controller: &mut PlayerController,
+        map_controller: &mut MapController,
         local_input_controller: &mut Option<LocalInputController>,
     ) {
         if e.update_args().is_some() {
@@ -76,13 +78,18 @@ impl ClientController {
 
             let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
 
-            unprocessed_inputs
-                .drain(..)
-                .for_each(|packet| Self::process(&host, packet, player_controller, tx));
+            unprocessed_inputs.drain(..).for_each(|packet| {
+                Self::process(&host, packet, player_controller, map_controller, tx)
+            });
 
             if let Some(local_input_controller) = local_input_controller.as_mut() {
-                let player = &player_controller.players[&local_input_controller.local_player];
+                let player = player_controller
+                    .players
+                    .get_mut(&local_input_controller.local_player)
+                    .expect("local player not present in player list");
                 let msg = ServerBoundMessage::UpdateInputs(player.inputs.clone());
+                player.inputs.jump = false;
+                player.inputs.shoot = false;
                 println!("sending msg {:?}", msg);
                 let packet =
                     Packet::reliable_unordered(self.host, bincode::serialize(&msg).unwrap());
@@ -95,6 +102,7 @@ impl ClientController {
         host: &SocketAddr,
         packet: ClientBound,
         player_controller: &mut PlayerController,
+        map_controller: &mut MapController,
         tx: &mut Sender<Packet>,
     ) {
         match packet.message {
@@ -103,15 +111,21 @@ impl ClientController {
                     Self::set_name(host, String::from("noname"), tx);
                 }
             }
+            ClientBoundMessage::SetMap(map) => {
+                map_controller.map = map;
+            }
             ClientBoundMessage::PlayerUpdate(state) => {
                 // todo create new player if not found
                 if let Some(player) = player_controller.players.get_mut(&state.name) {
                     println!("overriding player state: {:?}", state);
                     player.state = state;
                 } else {
-                    let mut player = Player::new(state.name.clone(), 50.0, 50.0, [0.0, 1.0, 0.0, 1.0]);
+                    let mut player =
+                        Player::new(state.name.clone(), 50.0, 50.0, [0.0, 1.0, 0.0, 1.0]);
                     player.state = state;
-                    player_controller.players.insert(player.state.name.clone(), player);
+                    player_controller
+                        .players
+                        .insert(player.state.name.clone(), player);
                 }
             }
         }

@@ -1,6 +1,6 @@
 use crate::network::messages::*;
 use crate::player::Player;
-use crate::PlayerController;
+use crate::{MapController, PlayerController};
 use bincode;
 use crossbeam::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
@@ -63,7 +63,12 @@ impl HostController {
         })
     }
 
-    pub fn event<E: GenericEvent>(&mut self, e: &E, player_controller: &mut PlayerController) {
+    pub fn event<E: GenericEvent>(
+        &mut self,
+        e: &E,
+        player_controller: &mut PlayerController,
+        map_controller: &mut MapController,
+    ) {
         if e.update_args().is_some() {
             let Self {
                 unprocessed_inputs,
@@ -75,9 +80,9 @@ impl HostController {
             let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
             let mut players = players.lock().unwrap();
 
-            unprocessed_inputs
-                .drain(..)
-                .for_each(|packet| Self::process(packet, &mut players, player_controller, tx));
+            unprocessed_inputs.drain(..).for_each(|packet| {
+                Self::process(packet, &mut players, player_controller, map_controller, tx)
+            });
 
             for player in player_controller.players.values() {
                 let msg = ClientBoundMessage::PlayerUpdate(player.state.clone());
@@ -94,12 +99,20 @@ impl HostController {
         packet: ServerBound,
         players: &mut HashMap<SocketAddr, String>,
         player_controller: &mut PlayerController,
+        map_controller: &mut MapController,
         tx: &mut Sender<Packet>,
     ) {
         let player = Self::get_player(packet.player_name, player_controller);
         match packet.message {
             ServerBoundMessage::SetName(name) => {
-                Self::set_name(name, packet.source, players, player_controller, tx);
+                Self::set_name(
+                    name,
+                    packet.source,
+                    players,
+                    player_controller,
+                    map_controller,
+                    tx,
+                );
             }
             ServerBoundMessage::UpdateInputs(inputs) => {
                 if let Some(player) = player {
@@ -115,6 +128,7 @@ impl HostController {
         source: SocketAddr,
         players: &mut HashMap<SocketAddr, String>,
         player_controller: &mut PlayerController,
+        map_controller: &mut MapController,
         tx: &mut Sender<Packet>,
     ) {
         let accepted = !player_controller
@@ -133,6 +147,9 @@ impl HostController {
         let response = ClientBoundMessage::SetNameResponse { accepted };
         let packet = Packet::reliable_unordered(source, bincode::serialize(&response).unwrap());
         tx.send(packet).unwrap();
+        let map = ClientBoundMessage::SetMap(map_controller.map.clone());
+        let map = Packet::reliable_unordered(source, bincode::serialize(&map).unwrap());
+        tx.send(map).unwrap();
     }
 
     fn get_player(

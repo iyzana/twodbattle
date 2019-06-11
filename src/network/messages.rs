@@ -1,4 +1,4 @@
-use crate::player;
+use crate::{map, player};
 use serde::{Deserialize, Serialize};
 use std::net::SocketAddr;
 
@@ -12,5 +12,6 @@ pub enum ServerBoundMessage {
 #[derive(Debug, Serialize, Deserialize)]
 pub enum ClientBoundMessage {
     SetNameResponse { accepted: bool },
+    SetMap(map::Map),
     PlayerUpdate(player::State),
 }
