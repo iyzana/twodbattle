@@ -85,7 +85,6 @@ pub fn run() {
     let mut window: GlutinWindow = WindowSettings::new("2dbattle", (1920, 1080))
         .exit_on_esc(true)
         .samples(16)
-        .opengl(opengl)
         .fullscreen(true)
         .build()
         .unwrap();

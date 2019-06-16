@@ -2,7 +2,7 @@ use crate::collision;
 use crate::collision::Collision;
 use crate::player;
 use crate::{Map, Player, ShotController};
-use piston::input::GenericEvent;
+use piston::input::{ButtonArgs, Button, ButtonState, GenericEvent, Key};
 use std::collections::HashMap;
 
 pub struct PlayerController {
@@ -33,6 +33,17 @@ impl PlayerController {
                 Self::motion(player, tick.dt);
             }
         }
+
+        if let Some(ButtonArgs {
+            button: Button::Keyboard(Key::R),
+            state: ButtonState::Press,
+            ..
+        }) = e.button_args()
+        {
+            self.players.values_mut()
+                .for_each(|player| player.state.lives = 20)
+        }
+
     }
 
     fn update(player: &mut Player, dt: f64) {
