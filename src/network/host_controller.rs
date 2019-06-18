@@ -89,7 +89,7 @@ impl HostController {
                 let msg = ClientBoundMessage::PlayerUpdate(player.state.clone());
                 for socket in players.keys() {
                     let packet =
-                        Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
+                        Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
                     tx.send(packet).unwrap();
                 }
             }
@@ -97,7 +97,7 @@ impl HostController {
             let msg = ClientBoundMessage::ShotUpdate(shot_controller.shots.clone());
             for socket in players.keys() {
                 let packet =
-                    Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
+                    Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
                 tx.send(packet).unwrap();
             }
         }
@@ -114,17 +114,16 @@ impl HostController {
                 ..
             } = self;
             let map = ClientBoundMessage::SetMap(map_controller.map.clone());
-            Self::broadcast(tx, &players.lock().unwrap(), map);
+            Self::broadcast_reliable(tx, &players.lock().unwrap(), map);
         }
     }
 
-    fn broadcast(tx: &Sender<Packet>, players: &HashMap<SocketAddr, String>, msg: ClientBoundMessage) {
+    fn broadcast_reliable(tx: &Sender<Packet>, players: &HashMap<SocketAddr, String>, msg: ClientBoundMessage) {
         for socket in players.keys() {
             let packet =
                 Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
             tx.send(packet).unwrap();
         }
-
     }
 
     fn process(

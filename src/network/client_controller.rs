@@ -94,7 +94,7 @@ impl ClientController {
                 player.inputs.shoot = false;
                 println!("sending msg {:?}", msg);
                 let packet =
-                    Packet::reliable_unordered(self.host, bincode::serialize(&msg).unwrap());
+                    Packet::unreliable(self.host, bincode::serialize(&msg).unwrap());
                 tx.send(packet).unwrap();
             }
         }
