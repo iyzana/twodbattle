@@ -21,7 +21,7 @@ mod shot;
 mod shot_controller;
 mod shot_view;
 
-use clap::{App, Arg, ArgGroup, SubCommand};
+use clap::{App, Arg, ArgGroup};
 use glutin_window::GlutinWindow;
 use local_input_controller::LocalInputController;
 pub use map::Map;
@@ -39,7 +39,6 @@ pub use player_view::PlayerView;
 pub use shot::Shot;
 pub use shot_controller::ShotController;
 pub use shot_view::ShotView;
-use std::env;
 
 pub fn run() {
     let matches = App::new("twodbattle")
@@ -133,6 +132,7 @@ pub fn run() {
                 &event,
                 &mut player_controller,
                 &mut map_controller,
+                &mut shot_controller,
                 &mut local_input_controller,
             );
         }
@@ -140,7 +140,7 @@ pub fn run() {
             map_controller.event(&event);
             player_controller.event(&map_controller.map, &mut shot_controller, &event);
             shot_controller.event(&map_controller.map, &mut player_controller, &event);
-            host.event(&event, &mut player_controller, &mut map_controller);
+            host.event(&event, &mut player_controller, &shot_controller, &map_controller);
         }
 
         if let Some(r) = event.render_args() {

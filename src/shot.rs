@@ -1,5 +1,7 @@
 use crate::entity::{Bounds, Speed};
+use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Shot {
     pub x: f64,
     pub y: f64,

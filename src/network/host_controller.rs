@@ -1,6 +1,6 @@
 use crate::network::messages::*;
 use crate::player::Player;
-use crate::{MapController, PlayerController};
+use crate::{MapController, PlayerController, ShotController};
 use bincode;
 use crossbeam::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
@@ -67,7 +67,8 @@ impl HostController {
         &mut self,
         e: &E,
         player_controller: &mut PlayerController,
-        map_controller: &mut MapController,
+        shot_controller: &ShotController,
+        map_controller: &MapController,
     ) {
         if e.update_args().is_some() {
             let Self {
@@ -92,6 +93,13 @@ impl HostController {
                     tx.send(packet).unwrap();
                 }
             }
+
+            let msg = ClientBoundMessage::ShotUpdate(shot_controller.shots.clone());
+            for socket in players.keys() {
+                let packet =
+                    Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
+                tx.send(packet).unwrap();
+            }
         }
     }
 
@@ -99,7 +107,7 @@ impl HostController {
         packet: ServerBound,
         players: &mut HashMap<SocketAddr, String>,
         player_controller: &mut PlayerController,
-        map_controller: &mut MapController,
+        map_controller: &MapController,
         tx: &mut Sender<Packet>,
     ) {
         let player = Self::get_player(packet.player_name, player_controller);
@@ -128,7 +136,7 @@ impl HostController {
         source: SocketAddr,
         players: &mut HashMap<SocketAddr, String>,
         player_controller: &mut PlayerController,
-        map_controller: &mut MapController,
+        map_controller: &MapController,
         tx: &mut Sender<Packet>,
     ) {
         let accepted = !player_controller

@@ -5,15 +5,14 @@ use crate::{Map, Player, ShotController};
 use piston::input::{ButtonArgs, Button, ButtonState, GenericEvent, Key};
 use std::collections::HashMap;
 
+#[derive(Default)]
 pub struct PlayerController {
     pub players: HashMap<String, Player>,
 }
 
 impl PlayerController {
     pub fn new() -> Self {
-        Self {
-            players: HashMap::new(),
-        }
+        Self::default()
     }
 
     pub fn event<E: GenericEvent>(

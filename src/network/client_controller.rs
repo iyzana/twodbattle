@@ -3,6 +3,7 @@ use crate::player::Player;
 use crate::LocalInputController;
 use crate::MapController;
 use crate::PlayerController;
+use crate::ShotController;
 use bincode;
 use crossbeam::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
@@ -66,6 +67,7 @@ impl ClientController {
         e: &E,
         player_controller: &mut PlayerController,
         map_controller: &mut MapController,
+        shot_controller: &mut ShotController,
         local_input_controller: &mut Option<LocalInputController>,
     ) {
         if e.update_args().is_some() {
@@ -79,7 +81,7 @@ impl ClientController {
             let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
 
             unprocessed_inputs.drain(..).for_each(|packet| {
-                Self::process(&host, packet, player_controller, map_controller, tx)
+                Self::process(&host, packet, player_controller, shot_controller, map_controller, tx)
             });
 
             if let Some(local_input_controller) = local_input_controller.as_mut() {
@@ -102,6 +104,7 @@ impl ClientController {
         host: &SocketAddr,
         packet: ClientBound,
         player_controller: &mut PlayerController,
+        shot_controller: &mut ShotController,
         map_controller: &mut MapController,
         tx: &mut Sender<Packet>,
     ) {
@@ -127,6 +130,9 @@ impl ClientController {
                         .players
                         .insert(player.state.name.clone(), player);
                 }
+            }
+            ClientBoundMessage::ShotUpdate(shots) => {
+                shot_controller.shots = shots;
             }
         }
     }
