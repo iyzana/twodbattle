@@ -4,7 +4,7 @@ use crate::{MapController, PlayerController, ShotController};
 use bincode;
 use crossbeam::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
-use piston::input::GenericEvent;
+use piston::input::{GenericEvent, Button, ButtonArgs, Key, ButtonState};
 use std::collections::HashMap;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::{Arc, Mutex};
@@ -101,6 +101,30 @@ impl HostController {
                 tx.send(packet).unwrap();
             }
         }
+
+        if let Some(ButtonArgs {
+            button: Button::Keyboard(Key::R),
+            state: ButtonState::Press,
+            ..
+        }) = e.button_args()
+        {
+            let Self {
+                players,
+                tx,
+                ..
+            } = self;
+            let map = ClientBoundMessage::SetMap(map_controller.map.clone());
+            Self::broadcast(tx, &players.lock().unwrap(), map);
+        }
+    }
+
+    fn broadcast(tx: &Sender<Packet>, players: &HashMap<SocketAddr, String>, msg: ClientBoundMessage) {
+        for socket in players.keys() {
+            let packet =
+                Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
+            tx.send(packet).unwrap();
+        }
+
     }
 
     fn process(

@@ -145,7 +145,7 @@ pub fn run() {
 
         if let Some(r) = event.render_args() {
             gl.draw(r.viewport(), |c, g| {
-                use graphics::clear;
+                use graphics::{Context, clear};
                 clear([0.0, 0.0, 0.0, 1.0], g);
 
                 map_view.draw(&map_controller, &c, g);
