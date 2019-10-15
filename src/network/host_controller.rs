@@ -108,17 +108,17 @@ impl HostController {
         {
             let Self { players, tx, .. } = self;
             let map = ClientBoundMessage::SetMap(map_controller.map.clone());
-            Self::broadcast_reliable(tx, &players.lock().unwrap(), map);
+            Self::broadcast_reliable(tx, &players.lock().unwrap(), &map);
         }
     }
 
     fn broadcast_reliable(
         tx: &Sender<Packet>,
         players: &HashMap<SocketAddr, String>,
-        msg: ClientBoundMessage,
+        msg: &ClientBoundMessage,
     ) {
         for socket in players.keys() {
-            let packet = Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
+            let packet = Packet::reliable_unordered(*socket, bincode::serialize(msg).unwrap());
             tx.send(packet).unwrap();
         }
     }

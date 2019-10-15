@@ -2,7 +2,7 @@ use crate::collision;
 use crate::collision::Collision;
 use crate::player;
 use crate::{Map, Player, ShotController};
-use piston::input::{ButtonArgs, Button, ButtonState, GenericEvent, Key};
+use piston::input::{Button, ButtonArgs, ButtonState, GenericEvent, Key};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -39,10 +39,10 @@ impl PlayerController {
             ..
         }) = e.button_args()
         {
-            self.players.values_mut()
+            self.players
+                .values_mut()
                 .for_each(|player| player.state.lives = 20)
         }
-
     }
 
     fn update(player: &mut Player, dt: f64) {
@@ -94,7 +94,7 @@ impl PlayerController {
                     player.on_ground = false;
                 }
             }
-            Some(Collision::CORNER { cell }) => {
+            Some(Collision::CORNER { .. }) => {
                 player.state.dx = 0.0;
             }
             _ => {

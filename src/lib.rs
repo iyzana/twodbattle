@@ -102,13 +102,13 @@ pub fn run() {
     let mut player_controller = PlayerController::new();
     let player_view = PlayerView::new();
 
-    let mut local_input_controller = if !observe {
+    let mut local_input_controller = if observe {
+        None
+    } else {
         let player = Player::new("succcubbus".to_string(), 50.0, 50.0, [1.0, 0.0, 0.0, 1.0]);
         let name = player.state.name.clone();
         player_controller.players.insert(name.clone(), player);
         Some(LocalInputController::new(name.clone()))
-    } else {
-        None
     };
 
     let mut shot_controller = ShotController::new();
@@ -131,7 +131,11 @@ pub fn run() {
             let translate_x = (width - 1920.0 * scale) / 2.0;
             let translate_y = (height - 1080.0 * scale) / 2.0;
 
-            local_input_controller.event(&event, &mut player_controller, (scale, translate_x, translate_y));
+            local_input_controller.event(
+                &event,
+                &mut player_controller,
+                (scale, translate_x, translate_y),
+            );
         }
         if let Some(client) = client.as_mut() {
             client.event(
