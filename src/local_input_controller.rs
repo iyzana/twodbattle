@@ -4,6 +4,7 @@ use piston::input::{Button, ButtonState, GenericEvent, Key, MouseButton};
 #[derive(Default)]
 pub struct LocalInputController {
     pub local_player: String,
+    pub dirty: bool,
     space: bool,
 }
 
@@ -27,21 +28,29 @@ impl LocalInputController {
             match input.button {
                 Button::Keyboard(Key::Space) => {
                     if input.state != ButtonState::Press {
+                        self.dirty = player.inputs.jump;
                         player.inputs.jump = false;
                     } else if !self.space {
+                        self.dirty = !player.inputs.jump;
                         player.inputs.jump = true;
                     }
 
                     self.space = input.state == ButtonState::Press;
                 }
                 Button::Keyboard(Key::A) => {
-                    player.inputs.left = input.state == ButtonState::Press;
+                    let new_state = input.state == ButtonState::Press;
+                    self.dirty = player.inputs.left != new_state;
+                    player.inputs.left = new_state;
                 }
                 Button::Keyboard(Key::D) => {
-                    player.inputs.right = input.state == ButtonState::Press;
+                    let new_state = input.state == ButtonState::Press;
+                    self.dirty = player.inputs.right != new_state;
+                    player.inputs.right = new_state;
                 }
                 Button::Mouse(MouseButton::Left) => {
-                    player.inputs.shoot = input.state == ButtonState::Press;
+                    let new_state = input.state == ButtonState::Press;
+                    self.dirty = player.inputs.shoot != new_state;
+                    player.inputs.shoot = new_state;
                 }
                 _ => {}
             }
@@ -50,6 +59,9 @@ impl LocalInputController {
         if let Some(mouse_pos) = e.mouse_cursor_args() {
             player.inputs.mouse_x = mouse_pos[0];
             player.inputs.mouse_y = mouse_pos[1];
+            if player.inputs.shoot {
+                self.dirty = true;
+            }
         }
     }
 }

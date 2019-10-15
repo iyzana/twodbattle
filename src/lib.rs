@@ -84,7 +84,7 @@ pub fn run() {
     let mut window: GlutinWindow = WindowSettings::new("2dbattle", (1920, 1080))
         .exit_on_esc(true)
         .samples(16)
-        .fullscreen(true)
+        .fullscreen(false)
         .build()
         .unwrap();
 
@@ -145,7 +145,7 @@ pub fn run() {
 
         if let Some(r) = event.render_args() {
             gl.draw(r.viewport(), |c, g| {
-                use graphics::{Context, clear};
+                use graphics::clear;
                 clear([0.0, 0.0, 0.0, 1.0], g);
 
                 map_view.draw(&map_controller, &c, g);

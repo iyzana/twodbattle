@@ -4,7 +4,7 @@ use crate::{MapController, PlayerController, ShotController};
 use bincode;
 use crossbeam::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
-use piston::input::{GenericEvent, Button, ButtonArgs, Key, ButtonState};
+use piston::input::{Button, ButtonArgs, ButtonState, GenericEvent, Key};
 use std::collections::HashMap;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::{Arc, Mutex};
@@ -24,13 +24,14 @@ pub struct HostController {
 
 impl HostController {
     pub fn listen(addr: impl ToSocketAddrs) -> Result<Self, ErrorKind> {
-        let (mut socket, tx, rx) = Socket::bind(addr)?;
+        let mut socket = Socket::bind(addr)?;
         let unprocessed_inputs = Arc::new(Mutex::new(vec![]));
         let players = Arc::new(Mutex::new(HashMap::new()));
 
         {
             let players = Arc::clone(&players);
             let unprocessed_inputs = Arc::clone(&unprocessed_inputs);
+            let rx = socket.get_event_receiver();
             thread::spawn(move || loop {
                 match rx.recv() {
                     Ok(SocketEvent::Packet(packet)) => {
@@ -52,9 +53,8 @@ impl HostController {
             });
         }
 
-        thread::spawn(move || {
-            socket.start_polling().unwrap();
-        });
+        let tx = socket.get_packet_sender();
+        thread::spawn(move || socket.start_polling());
 
         Ok(Self {
             players,
@@ -88,16 +88,14 @@ impl HostController {
             for player in player_controller.players.values() {
                 let msg = ClientBoundMessage::PlayerUpdate(player.state.clone());
                 for socket in players.keys() {
-                    let packet =
-                        Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
+                    let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
                     tx.send(packet).unwrap();
                 }
             }
 
             let msg = ClientBoundMessage::ShotUpdate(shot_controller.shots.clone());
             for socket in players.keys() {
-                let packet =
-                    Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
+                let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
                 tx.send(packet).unwrap();
             }
         }
@@ -108,20 +106,19 @@ impl HostController {
             ..
         }) = e.button_args()
         {
-            let Self {
-                players,
-                tx,
-                ..
-            } = self;
+            let Self { players, tx, .. } = self;
             let map = ClientBoundMessage::SetMap(map_controller.map.clone());
             Self::broadcast_reliable(tx, &players.lock().unwrap(), map);
         }
     }
 
-    fn broadcast_reliable(tx: &Sender<Packet>, players: &HashMap<SocketAddr, String>, msg: ClientBoundMessage) {
+    fn broadcast_reliable(
+        tx: &Sender<Packet>,
+        players: &HashMap<SocketAddr, String>,
+        msg: ClientBoundMessage,
+    ) {
         for socket in players.keys() {
-            let packet =
-                Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
+            let packet = Packet::reliable_unordered(*socket, bincode::serialize(&msg).unwrap());
             tx.send(packet).unwrap();
         }
     }

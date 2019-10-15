@@ -25,7 +25,7 @@ impl PlayerView {
             } = player.state;
 
             if lives == 0 {
-                return;
+                continue;
             }
 
             let mut color = color;

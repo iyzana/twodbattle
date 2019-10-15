@@ -26,8 +26,9 @@ pub struct ClientController {
 
 impl ClientController {
     pub fn connect(host: SocketAddr, local: SocketAddr) -> Result<Self, ErrorKind> {
-        let (mut socket, mut tx, rx) = Socket::bind(local)?;
+        let mut socket = Socket::bind(local)?;
         let unprocessed_inputs = Arc::new(Mutex::new(vec![]));
+        let rx = socket.get_event_receiver();
 
         {
             let unprocessed_inputs = Arc::clone(&unprocessed_inputs);
@@ -43,17 +44,16 @@ impl ClientController {
                             message: bincode::deserialize(packet.payload()).unwrap(),
                         });
                     }
-                    Ok(SocketEvent::Connect(addr)) => {}
+                    Ok(SocketEvent::Connect(_addr)) => {}
                     _ => {}
                 }
             });
         }
 
-        thread::spawn(move || {
-            socket.start_polling().unwrap();
-        });
-
+        let mut tx = socket.get_packet_sender();
         Self::set_name(&host, String::from("client"), &mut tx);
+
+        thread::spawn(move || socket.start_polling());
 
         Ok(Self {
             host,
@@ -81,21 +81,35 @@ impl ClientController {
             let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
 
             unprocessed_inputs.drain(..).for_each(|packet| {
-                Self::process(&host, packet, player_controller, shot_controller, map_controller, tx)
+                Self::process(
+                    &host,
+                    packet,
+                    player_controller,
+                    shot_controller,
+                    map_controller,
+                    tx,
+                )
             });
 
-            if let Some(local_input_controller) = local_input_controller.as_mut() {
-                let player = player_controller
-                    .players
-                    .get_mut(&local_input_controller.local_player)
-                    .expect("local player not present in player list");
-                let msg = ServerBoundMessage::UpdateInputs(player.inputs.clone());
-                player.inputs.jump = false;
-                player.inputs.shoot = false;
-                println!("sending msg {:?}", msg);
-                let packet =
-                    Packet::unreliable(self.host, bincode::serialize(&msg).unwrap());
-                tx.send(packet).unwrap();
+            if let Some(LocalInputController {
+                local_player,
+                dirty,
+                ..
+            }) = local_input_controller.as_mut()
+            {
+                if *dirty {
+                    *dirty = false;
+                    let player = player_controller
+                        .players
+                        .get_mut(local_player)
+                        .expect("local player not present in player list");
+                    let msg = ServerBoundMessage::UpdateInputs(player.inputs.clone());
+                    player.inputs.jump = false;
+                    player.inputs.shoot = false;
+                    println!("sending msg {:?}", msg);
+                    let packet = Packet::unreliable(self.host, bincode::serialize(&msg).unwrap());
+                    tx.send(packet).unwrap();
+                }
             }
         }
     }
