@@ -30,6 +30,7 @@ pub struct Player {
     pub inputs: Inputs,
     pub on_ground: bool,
     pub has_double_jump: bool,
+    pub dirty: bool,
 }
 
 impl Player {
@@ -49,6 +50,7 @@ impl Player {
             inputs: Inputs::default(),
             on_ground: false,
             has_double_jump: true,
+            dirty: true,
         }
     }
 

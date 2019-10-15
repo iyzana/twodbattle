@@ -105,10 +105,10 @@ pub fn run() {
     let mut local_input_controller = if observe {
         None
     } else {
-        let player = Player::new("succcubbus".to_string(), 50.0, 50.0, [1.0, 0.0, 0.0, 1.0]);
-        let name = player.state.name.clone();
-        player_controller.players.insert(name.clone(), player);
-        Some(LocalInputController::new(name.clone()))
+        let name = if join_server.is_some() { "client" } else { "host" };
+        let player = Player::new(name.to_string(), 50.0, 50.0, [1.0, 0.0, 0.0, 1.0]);
+        player_controller.players.insert(name.to_string(), player);
+        Some(LocalInputController::new(name.to_string()))
     };
 
     let mut shot_controller = ShotController::new();
@@ -146,10 +146,12 @@ pub fn run() {
                 &mut local_input_controller,
             );
         }
-        if let Some(host) = host.as_mut() {
-            map_controller.event(&event);
+        if client.is_some() || host.is_some() {
             player_controller.event(&map_controller.map, &mut shot_controller, &event);
             shot_controller.event(&map_controller.map, &mut player_controller, &event);
+        }
+        if let Some(host) = host.as_mut() {
+            map_controller.event(&event);
             host.event(
                 &event,
                 &mut player_controller,

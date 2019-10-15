@@ -54,6 +54,9 @@ impl PlayerController {
         } else {
             let friction = if player.on_ground { 16.0 } else { 4.0 };
             player.state.dx -= player.state.dx * friction * dt;
+            if player.state.dx.abs() < 0.000_001 {
+                player.state.dx = 0.0;
+            }
         }
 
         if player.inputs.jump && (player.on_ground || player.has_double_jump) {

@@ -85,6 +85,7 @@ impl ClientController {
                     &host,
                     packet,
                     player_controller,
+                    local_input_controller,
                     shot_controller,
                     map_controller,
                     tx,
@@ -104,8 +105,6 @@ impl ClientController {
                         .get_mut(local_player)
                         .expect("local player not present in player list");
                     let msg = ServerBoundMessage::UpdateInputs(player.inputs.clone());
-                    player.inputs.jump = false;
-                    player.inputs.shoot = false;
                     println!("sending msg {:?}", msg);
                     let packet = Packet::unreliable(self.host, bincode::serialize(&msg).unwrap());
                     tx.send(packet).unwrap();
@@ -118,6 +117,7 @@ impl ClientController {
         host: &SocketAddr,
         packet: ClientBound,
         player_controller: &mut PlayerController,
+        local_input_controller: &Option<LocalInputController>,
         shot_controller: &mut ShotController,
         map_controller: &mut MapController,
         tx: &mut Sender<Packet>,
@@ -131,15 +131,24 @@ impl ClientController {
             ClientBoundMessage::SetMap(map) => {
                 map_controller.map = map;
             }
-            ClientBoundMessage::PlayerUpdate(state) => {
-                // todo create new player if not found
+            ClientBoundMessage::PlayerUpdate(state, inputs) => {
                 if let Some(player) = player_controller.players.get_mut(&state.name) {
-                    println!("overriding player state: {:?}", state);
+                    println!("overriding player:\n  {:?}", state);
                     player.state = state;
+                    if local_input_controller
+                        .as_ref()
+                        .map(|l| l.local_player != player.state.name)
+                        .unwrap_or(true)
+                    {
+                        println!("  {:?}", inputs);
+                        player.inputs = inputs;
+                    }
                 } else {
+                    println!("creating new player:\n  {:?}\n  {:?}", state.name, inputs);
                     let mut player =
                         Player::new(state.name.clone(), 50.0, 50.0, [0.0, 1.0, 0.0, 1.0]);
                     player.state = state;
+                    player.inputs = inputs;
                     player_controller
                         .players
                         .insert(player.state.name.clone(), player);

@@ -33,10 +33,10 @@ impl LocalInputController {
             match input.button {
                 Button::Keyboard(Key::Space) => {
                     if input.state != ButtonState::Press {
-                        self.dirty = player.inputs.jump;
+                        self.dirty = true;
                         player.inputs.jump = false;
                     } else if !self.space {
-                        self.dirty = !player.inputs.jump;
+                        self.dirty = true;
                         player.inputs.jump = true;
                     }
 
@@ -59,6 +59,8 @@ impl LocalInputController {
                 }
                 _ => {}
             }
+
+            player.dirty = self.dirty;
         }
 
         if let Some(mouse_pos) = e.mouse_cursor_args() {
@@ -67,6 +69,7 @@ impl LocalInputController {
             if player.inputs.shoot {
                 self.dirty = true;
             }
+            player.dirty = self.dirty;
         }
     }
 }
