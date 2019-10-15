@@ -1,4 +1,4 @@
-extern crate glutin_window;
+extern crate glfw_window;
 extern crate graphics;
 extern crate itertools;
 extern crate opengl_graphics;
@@ -22,7 +22,7 @@ mod shot_controller;
 mod shot_view;
 
 use clap::{App, Arg, ArgGroup};
-use glutin_window::GlutinWindow;
+use glfw_window::GlfwWindow;
 use local_input_controller::LocalInputController;
 pub use map::Map;
 pub use map_controller::MapController;
@@ -33,6 +33,7 @@ use opengl_graphics::{GlGraphics, OpenGL};
 use piston::event_loop::{EventSettings, Events};
 use piston::input::*;
 use piston::window::WindowSettings;
+use piston::window::{Size, Window};
 pub use player::Player;
 pub use player_controller::PlayerController;
 pub use player_view::PlayerView;
@@ -81,7 +82,7 @@ pub fn run() {
     let observe = matches.is_present("observe");
 
     let opengl = OpenGL::V3_3;
-    let mut window: GlutinWindow = WindowSettings::new("2dbattle", (1920, 1080))
+    let mut window: GlfwWindow = WindowSettings::new("2dbattle", (1920, 1080))
         .exit_on_esc(true)
         .samples(16)
         .fullscreen(false)
@@ -125,7 +126,12 @@ pub fn run() {
 
     while let Some(event) = events.next(&mut window) {
         if let Some(local_input_controller) = local_input_controller.as_mut() {
-            local_input_controller.event(&event, &mut player_controller);
+            let Size { width, height } = window.size();
+            let scale = (width / 1920.0).min(height / 1080.0);
+            let translate_x = (width - 1920.0 * scale) / 2.0;
+            let translate_y = (height - 1080.0 * scale) / 2.0;
+
+            local_input_controller.event(&event, &mut player_controller, (scale, translate_x, translate_y));
         }
         if let Some(client) = client.as_mut() {
             client.event(
@@ -140,13 +146,28 @@ pub fn run() {
             map_controller.event(&event);
             player_controller.event(&map_controller.map, &mut shot_controller, &event);
             shot_controller.event(&map_controller.map, &mut player_controller, &event);
-            host.event(&event, &mut player_controller, &shot_controller, &map_controller);
+            host.event(
+                &event,
+                &mut player_controller,
+                &shot_controller,
+                &map_controller,
+            );
         }
 
         if let Some(r) = event.render_args() {
-            gl.draw(r.viewport(), |c, g| {
-                use graphics::clear;
+            gl.draw(r.viewport(), |mut c, g| {
+                use graphics::{clear, Transformed};
                 clear([0.0, 0.0, 0.0, 1.0], g);
+
+                let Size { width, height } = window.size();
+                let scale = (width / 1920.0).min(height / 1080.0);
+                let translate_x = (width - 1920.0 * scale) / 2.0;
+                let translate_y = (height - 1080.0 * scale) / 2.0;
+                // scale to window size and center
+                c.transform = c
+                    .transform
+                    .trans(translate_x, translate_y)
+                    .scale(scale, scale);
 
                 map_view.draw(&map_controller, &c, g);
                 player_view.draw(&player_controller, &c, g);

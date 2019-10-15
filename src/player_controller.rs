@@ -95,13 +95,7 @@ impl PlayerController {
                 }
             }
             Some(Collision::CORNER { cell }) => {
-                if player.state.dy > 0.0 {
-                    player.on_ground = true;
-                    player.has_double_jump = true;
-                    player.state.y = cell.y - player.state.height;
-                }
                 player.state.dx = 0.0;
-                player.state.dy = 0.0;
             }
             _ => {
                 player.on_ground = false;

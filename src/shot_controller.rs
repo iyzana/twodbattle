@@ -50,7 +50,7 @@ impl ShotController {
         }
 
         if let Some(tick) = e.update_args() {
-            self.update(player_controller);
+            self.update(map, player_controller);
 
             self.shots.retain(|shot| {
                 shot.lives > 0 && collides(shot.bounds(), [0.0, 0.0, 1920.0, 1080.0])
@@ -63,7 +63,7 @@ impl ShotController {
         }
     }
 
-    fn update(&mut self, player_controller: &mut PlayerController) {
+    fn update(&mut self, map: &Map, player_controller: &mut PlayerController) {
         for player in player_controller.players.values_mut() {
             if player.state.lives == 0 {
                 continue;
@@ -72,19 +72,28 @@ impl ShotController {
             if player.inputs.shoot {
                 let player_x = player.state.x;
                 let player_y = player.state.y;
-                let mouse_x = player_x - player.inputs.mouse_x;
-                let mouse_y = player_y - player.inputs.mouse_y;
+                let mouse_x = player_x - player.inputs.mouse_x + 15.0 / 2.0;
+                let mouse_y = player_y - player.inputs.mouse_y + 15.0 / 2.0;
                 let angle = mouse_y.atan2(mouse_x);
                 let speed = 800.0;
                 let spawn_dist = 20.0;
-                self.shots.push(Shot::new(
+                let shot = Shot::new(
                     player_x + spawn_dist * -angle.cos(),
                     player_y + spawn_dist * -angle.sin(),
                     speed * -angle.cos(),
                     speed * -angle.sin(),
                     player.state.name.clone(),
                     5,
-                ));
+                );
+                let cells: Vec<_> = map.all_cells().collect();
+                if let Some(Collision::SIDE {
+                    x: Some(_),
+                    y: Some(_),
+                }) = collision::check(&shot, &cells, 0.0)
+                {
+                    continue;
+                }
+                self.shots.push(shot);
 
                 player.inputs.shoot = false;
             }

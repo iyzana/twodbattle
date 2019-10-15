@@ -16,7 +16,12 @@ impl LocalInputController {
         }
     }
 
-    pub fn event<E: GenericEvent>(&mut self, e: &E, player_controller: &mut PlayerController) {
+    pub fn event<E: GenericEvent>(
+        &mut self,
+        e: &E,
+        player_controller: &mut PlayerController,
+        (scale, translate_x, translate_y): (f64, f64, f64),
+    ) {
         let player = player_controller.players.get_mut(&self.local_player);
 
         let player = match player {
@@ -57,8 +62,8 @@ impl LocalInputController {
         }
 
         if let Some(mouse_pos) = e.mouse_cursor_args() {
-            player.inputs.mouse_x = mouse_pos[0];
-            player.inputs.mouse_y = mouse_pos[1];
+            player.inputs.mouse_x = (mouse_pos[0] - translate_x) / scale;
+            player.inputs.mouse_y = (mouse_pos[1] - translate_y) / scale;
             if player.inputs.shoot {
                 self.dirty = true;
             }

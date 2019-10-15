@@ -18,10 +18,10 @@ pub fn generate_map(width: u8, height: u8) -> Vec<Vec<bool>> {
     let height_distribution = Uniform::from(min_height..max_height);
 
     loop {
-        walls.push(Wall(0, 0, width, true));
-        walls.push(Wall(0, height - 1, width, true));
-        walls.push(Wall(0, 0, height, false));
-        walls.push(Wall(width - 1, 0, height, false));
+        walls.push(Wall::new(0, 0, width, 1));
+        walls.push(Wall::new(0, height - 1, width, 1));
+        walls.push(Wall::new(0, 0, 1, height));
+        walls.push(Wall::new(width - 1, 0, 1, height));
 
         let mut tries = 0;
         while walls.len() < num_walls {
@@ -31,20 +31,20 @@ pub fn generate_map(width: u8, height: u8) -> Vec<Vec<bool>> {
 
             let x = x_distribution.sample(&mut rng);
             let y = y_distribution.sample(&mut rng);
-            let (size, horizontal) = if rng.gen::<f64>() < 0.7 {
-                (width_distribution.sample(&mut rng), true)
+            let (wall_width, wall_height) = if rng.gen::<f64>() < 0.7 {
+                (width_distribution.sample(&mut rng), 1)
             } else {
-                (height_distribution.sample(&mut rng), false)
+                (1, height_distribution.sample(&mut rng))
             };
-            let wall = Wall(x, y, size, horizontal);
+            let wall = Wall::new(x, y, wall_width, wall_height);
 
-            if x + wall.width() > width || y + wall.height() > height {
+            if x + wall.width > width || y + wall.height > height {
                 continue;
             }
 
             let intersects = walls
                 .iter()
-                .filter(|other| other.3 == wall.3)
+                .filter(|other| other.is_horizontal() == wall.is_horizontal())
                 .any(|other| other.intersects(&wall));
 
             if intersects {
@@ -75,8 +75,8 @@ fn to_grid(walls: &[Wall], width: u8, height: u8) -> Vec<Vec<bool>> {
     let mut grid = vec![vec![false; height as usize]; width as usize];
 
     for wall in walls {
-        for x in wall.x()..wall.x() + wall.width() {
-            for y in wall.y()..wall.y() + wall.height() {
+        for x in wall.x..wall.x + wall.width {
+            for y in wall.y..wall.y + wall.height {
                 grid[x as usize][y as usize] = true;
             }
         }
@@ -203,44 +203,33 @@ fn jumpable(x: usize, y: usize, grid: &[Vec<bool>], range: RangeInclusive<usize>
     lowest <= 8
 }
 
-struct Wall(u8, u8, u8, bool);
+#[derive(Debug)]
+struct Wall {
+    x: u8,
+    y: u8,
+    width: u8,
+    height: u8,
+}
 
 impl Wall {
+    fn new(x: u8, y: u8, width: u8, height: u8) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+
     fn intersects(&self, other: &Self) -> bool {
-        if self.3 {
-            self.y() == other.y()
-                && !(self.x() < other.x() && self.x() + self.width() < other.x()
-                    || self.x() > other.x() + other.width()
-                        && self.x() + self.width() > other.x() + other.width())
-        } else {
-            self.x() == other.x()
-                && !(self.y() < other.y() && self.y() + self.height() < other.y()
-                    || self.y() > other.y() + other.height()
-                        && self.y() + self.height() > other.y() + other.height())
-        }
+        let x_intersects = (self.x..self.x + self.width).contains(&other.x)
+            || (other.x..other.x + other.width).contains(&self.x);
+        let y_intersects = (self.y..self.y + self.height).contains(&other.y)
+            || (other.y..other.y + other.height).contains(&self.y);
+        x_intersects && y_intersects
     }
 
-    fn x(&self) -> u8 {
-        self.0
-    }
-
-    fn y(&self) -> u8 {
-        self.1
-    }
-
-    fn width(&self) -> u8 {
-        if self.3 {
-            self.2
-        } else {
-            1
-        }
-    }
-
-    fn height(&self) -> u8 {
-        if self.3 {
-            1
-        } else {
-            self.2
-        }
+    fn is_horizontal(&self) -> bool {
+        self.height == 1
     }
 }
