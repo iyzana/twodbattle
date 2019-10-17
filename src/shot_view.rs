@@ -11,10 +11,9 @@ impl ShotView {
 
     pub fn draw<G: Graphics>(&self, controller: &ShotController, c: &Context, g: &mut G) {
         use graphics::*;
-        let color = [1.0, 0.0, 0.0, 1.0];
-        let ellipse = Ellipse::new(color);
 
         for shot in &controller.shots {
+            let ellipse = Ellipse::new(shot.color);
             ellipse.draw(shot.bounds(), &c.draw_state, c.transform, g);
         }
     }

@@ -84,6 +84,7 @@ impl ShotController {
                     speed * -angle.sin(),
                     player.state.name.clone(),
                     5,
+                    player.state.color,
                 );
                 let cells: Vec<_> = map.all_cells().collect();
                 if let Some(Collision::SIDE {

@@ -11,10 +11,19 @@ pub struct Shot {
     pub dy: f64,
     pub owner: String,
     pub lives: u32,
+    pub color: [f32; 4],
 }
 
 impl Shot {
-    pub fn new(x: f64, y: f64, dx: f64, dy: f64, owner: String, lives: u32) -> Self {
+    pub fn new(
+        x: f64,
+        y: f64,
+        dx: f64,
+        dy: f64,
+        owner: String,
+        lives: u32,
+        color: [f32; 4],
+    ) -> Self {
         Self {
             x,
             y,
@@ -24,6 +33,7 @@ impl Shot {
             dy,
             owner,
             lives,
+            color,
         }
     }
 
