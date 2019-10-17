@@ -13,5 +13,5 @@ pub enum ClientBoundMessage {
     SetNameResponse { accepted: bool },
     SetMap(map::Map),
     PlayerUpdate(player::State, player::Inputs),
-    ShotUpdate(Vec<shot::Shot>),
+    ShotUpdate(shot::State),
 }

@@ -1,11 +1,16 @@
 use crate::collision;
 use crate::collision::Collision;
+use crate::entity::Bounds;
+use crate::shot;
 use crate::{Map, PlayerController, Shot};
 use piston::input::GenericEvent;
+use std::collections::HashMap;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 #[derive(Default)]
 pub struct ShotController {
-    pub shots: Vec<Shot>,
+    pub shots: HashMap<shot::Id, Shot>,
+    pub next_id: AtomicU32,
 }
 
 impl ShotController {
@@ -24,17 +29,19 @@ impl ShotController {
             match collision::check(shot, &cells, dt) {
                 Some(Collision::SIDE { x, y }) => {
                     if x.is_some() {
-                        shot.dx = -shot.dx;
+                        shot.state.dx = -shot.state.dx;
                     }
                     if y.is_some() {
-                        shot.dy = -shot.dy;
+                        shot.state.dy = -shot.state.dy;
                     }
-                    shot.lives -= 1;
+                    shot.state.lives -= 1;
+                    shot.dirty = true;
                 }
                 Some(Collision::CORNER { .. }) => {
-                    shot.dx = -shot.dx;
-                    shot.dy = -shot.dy;
-                    shot.lives -= 1;
+                    shot.state.dx = -shot.state.dx;
+                    shot.state.dy = -shot.state.dy;
+                    shot.state.lives -= 1;
+                    shot.dirty = true;
                 }
                 _ => {}
             }
@@ -45,18 +52,18 @@ impl ShotController {
         }
 
         fn motion(shot: &mut Shot, dt: f64) {
-            shot.x += shot.dx * dt;
-            shot.y += shot.dy * dt;
+            shot.state.x += shot.state.dx * dt;
+            shot.state.y += shot.state.dy * dt;
         }
 
         if let Some(tick) = e.update_args() {
             self.update(map, player_controller);
 
-            self.shots.retain(|shot| {
-                shot.lives > 0 && collides(shot.bounds(), [0.0, 0.0, 1920.0, 1080.0])
+            self.shots.retain(|_, shot| {
+                shot.state.lives > 0 && collides(shot.bounds(), [0.0, 0.0, 1920.0, 1080.0])
             });
 
-            for mut shot in &mut self.shots {
+            for mut shot in self.shots.values_mut() {
                 process_collision(&mut shot, map, tick.dt);
                 motion(&mut shot, tick.dt);
             }
@@ -77,13 +84,14 @@ impl ShotController {
                 let angle = mouse_y.atan2(mouse_x);
                 let speed = 800.0;
                 let spawn_dist = 20.0;
+                let id = self.next_id.fetch_add(1, Ordering::SeqCst);
                 let shot = Shot::new(
                     player_x + spawn_dist * -angle.cos(),
                     player_y + spawn_dist * -angle.sin(),
                     speed * -angle.cos(),
                     speed * -angle.sin(),
+                    id,
                     player.state.name.clone(),
-                    5,
                     player.state.color,
                 );
                 let cells: Vec<_> = map.all_cells().collect();
@@ -94,7 +102,7 @@ impl ShotController {
                 {
                     continue;
                 }
-                self.shots.push(shot);
+                self.shots.insert(shot.state.id.clone(), shot);
 
                 player.inputs.shoot = false;
             }

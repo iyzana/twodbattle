@@ -66,7 +66,7 @@ impl HostController {
         &mut self,
         e: &E,
         player_controller: &mut PlayerController,
-        shot_controller: &ShotController,
+        shot_controller: &mut ShotController,
         map_controller: &mut MapController,
     ) {
         if e.update_args().is_some() {
@@ -97,10 +97,13 @@ impl HostController {
                     Self::process(packet, &mut players, player_controller, map_controller, tx)
                 });
 
-                let msg = ClientBoundMessage::ShotUpdate(shot_controller.shots.clone());
-                for socket in players.keys() {
-                    let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
-                    tx.send(packet).unwrap();
+                for shot in shot_controller.shots.values_mut().filter(|shot| shot.dirty) {
+                    shot.dirty = false;
+                    let msg = ClientBoundMessage::ShotUpdate(shot.state.clone());
+                    for socket in players.keys() {
+                        let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
+                        tx.send(packet).unwrap();
+                    }
                 }
             }
 

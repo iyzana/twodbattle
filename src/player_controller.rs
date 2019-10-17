@@ -105,9 +105,9 @@ impl PlayerController {
             }
         }
 
-        for shot in &mut shot_controller.shots {
+        for shot in &mut shot_controller.shots.values_mut() {
             if player.state.lives > 0 && collision::collides(player, shot) {
-                shot.lives = 0;
+                shot.state.lives = 0;
                 player.state.lives -= 1;
             }
         }

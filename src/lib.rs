@@ -159,7 +159,7 @@ pub fn run() {
             host.event(
                 &event,
                 &mut player_controller,
-                &shot_controller,
+                &mut shot_controller,
                 &mut map_controller,
             );
         }

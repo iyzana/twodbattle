@@ -1,5 +1,6 @@
 use crate::network::messages::*;
 use crate::player::Player;
+use crate::shot::Shot;
 use crate::LocalInputController;
 use crate::MapController;
 use crate::PlayerController;
@@ -157,8 +158,19 @@ impl ClientController {
                         .insert(player.state.name.clone(), player);
                 }
             }
-            ClientBoundMessage::ShotUpdate(shots) => {
-                shot_controller.shots = shots;
+            ClientBoundMessage::ShotUpdate(shot_state) => {
+                shot_controller
+                    .shots
+                    .entry(shot_state.id.clone())
+                    .and_modify(|shot| shot.state = shot_state.clone())
+                    .or_insert_with(|| {
+                        let color = player_controller
+                            .players
+                            .get(&shot_state.id.owner)
+                            .map(|player| player.state.color)
+                            .unwrap_or([0.0; 4]);
+                        Shot::from_state(shot_state, color)
+                    });
             }
         }
     }
