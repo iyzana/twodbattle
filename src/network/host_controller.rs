@@ -1,10 +1,10 @@
 use crate::network::messages::*;
 use crate::player::Player;
-use crate::{MapController, PlayerController, ShotController};
+use crate::{Map, MapController, PlayerController, ShotController};
 use bincode;
 use crossbeam::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
-use piston::input::{Button, ButtonArgs, ButtonState, GenericEvent, Key};
+use piston::input::GenericEvent;
 use std::collections::HashMap;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::{Arc, Mutex};
@@ -67,49 +67,69 @@ impl HostController {
         e: &E,
         player_controller: &mut PlayerController,
         shot_controller: &ShotController,
-        map_controller: &MapController,
+        map_controller: &mut MapController,
     ) {
         if e.update_args().is_some() {
-            let Self {
-                unprocessed_inputs,
-                players,
-                tx,
-                ..
-            } = self;
+            {
+                let Self {
+                    unprocessed_inputs,
+                    players,
+                    tx,
+                    ..
+                } = self;
 
-            let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
-            let mut players = players.lock().unwrap();
+                let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
+                let mut players = players.lock().unwrap();
 
-            for player in player_controller.players.values_mut().filter(|p| p.dirty) {
-                player.dirty = false;
-                let msg =
-                    ClientBoundMessage::PlayerUpdate(player.state.clone(), player.inputs.clone());
+                for player in player_controller.players.values_mut().filter(|p| p.dirty) {
+                    player.dirty = false;
+                    let msg = ClientBoundMessage::PlayerUpdate(
+                        player.state.clone(),
+                        player.inputs.clone(),
+                    );
+                    for socket in players.keys() {
+                        let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
+                        tx.send(packet).unwrap();
+                    }
+                }
+
+                unprocessed_inputs.drain(..).for_each(|packet| {
+                    Self::process(packet, &mut players, player_controller, map_controller, tx)
+                });
+
+                let msg = ClientBoundMessage::ShotUpdate(shot_controller.shots.clone());
                 for socket in players.keys() {
                     let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
                     tx.send(packet).unwrap();
                 }
             }
 
-            unprocessed_inputs.drain(..).for_each(|packet| {
-                Self::process(packet, &mut players, player_controller, map_controller, tx)
-            });
-
-            let msg = ClientBoundMessage::ShotUpdate(shot_controller.shots.clone());
-            for socket in players.keys() {
-                let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
-                tx.send(packet).unwrap();
-            }
+            self.update_game_state(player_controller, map_controller);
         }
+    }
 
-        if let Some(ButtonArgs {
-            button: Button::Keyboard(Key::R),
-            state: ButtonState::Press,
-            ..
-        }) = e.button_args()
-        {
+    fn update_game_state(
+        &self,
+        player_controller: &mut PlayerController,
+        map_controller: &mut MapController,
+    ) {
+        let players_alive = player_controller
+            .players
+            .values()
+            .filter(|player| player.state.lives > 0)
+            .count();
+        let player_count = player_controller.players.len();
+
+        if player_count > 1 && players_alive <= 1 {
+            map_controller.map = Map::new();
             let Self { players, tx, .. } = self;
             let map = ClientBoundMessage::SetMap(map_controller.map.clone());
             Self::broadcast_reliable(tx, &players.lock().unwrap(), &map);
+
+            player_controller.players.values_mut().for_each(|player| {
+                player.state.lives = 20;
+                player.dirty = true;
+            });
         }
     }
 

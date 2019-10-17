@@ -105,7 +105,11 @@ pub fn run() {
     let mut local_input_controller = if observe {
         None
     } else {
-        let name = if join_server.is_some() { "client" } else { "host" };
+        let name = if join_server.is_some() {
+            "client"
+        } else {
+            "host"
+        };
         let player = Player::new(name.to_string(), 50.0, 50.0, [1.0, 0.0, 0.0, 1.0]);
         player_controller.players.insert(name.to_string(), player);
         Some(LocalInputController::new(name.to_string()))
@@ -156,7 +160,7 @@ pub fn run() {
                 &event,
                 &mut player_controller,
                 &shot_controller,
-                &map_controller,
+                &mut map_controller,
             );
         }
 

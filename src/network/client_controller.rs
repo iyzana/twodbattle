@@ -40,9 +40,12 @@ impl ClientController {
                             break;
                         }
 
-                        unprocessed_inputs.lock().unwrap().push(ClientBound {
-                            message: bincode::deserialize(packet.payload()).unwrap(),
-                        });
+                        let message = bincode::deserialize(packet.payload()).unwrap();
+                        println!("decoded message {:?}", message);
+                        unprocessed_inputs
+                            .lock()
+                            .unwrap()
+                            .push(ClientBound { message });
                     }
                     Ok(SocketEvent::Connect(_addr)) => {}
                     _ => {}
