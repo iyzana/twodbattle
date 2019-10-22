@@ -110,8 +110,13 @@ pub fn run() {
         } else {
             "host"
         };
-        let player = Player::new(name.to_string(), 50.0, 50.0, [1.0, 0.0, 0.0, 1.0]);
-        player_controller.players.insert(name.to_string(), player);
+        if host {
+            let color = player_controller
+                .get_free_color()
+                .expect("no colors available");
+            let player = Player::new(name.to_string(), 50.0, 50.0, color);
+            player_controller.players.insert(name.to_string(), player);
+        }
         Some(LocalInputController::new(name.to_string()))
     };
 
@@ -150,10 +155,6 @@ pub fn run() {
                 &mut local_input_controller,
             );
         }
-        if client.is_some() || host.is_some() {
-            player_controller.event(&map_controller.map, &mut shot_controller, &event);
-            shot_controller.event(&map_controller.map, &mut player_controller, &event);
-        }
         if let Some(host) = host.as_mut() {
             map_controller.event(&event);
             host.event(
@@ -163,6 +164,8 @@ pub fn run() {
                 &mut map_controller,
             );
         }
+        player_controller.event(&map_controller.map, &mut shot_controller, &event);
+        shot_controller.event(&map_controller.map, &mut player_controller, &event);
 
         if let Some(r) = event.render_args() {
             gl.draw(r.viewport(), |mut c, g| {

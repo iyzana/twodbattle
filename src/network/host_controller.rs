@@ -37,6 +37,11 @@ impl HostController {
                     Ok(SocketEvent::Packet(packet)) => {
                         let player_name = players.lock().unwrap().get(&packet.addr()).cloned();
                         let msg = bincode::deserialize(packet.payload()).unwrap();
+                        match msg {
+                            ServerBoundMessage::Connect => continue,
+                            ServerBoundMessage::Disconnect => continue,
+                            _ => (),
+                        }
                         println!("decoded message {:?}", msg);
                         unprocessed_inputs.lock().unwrap().push(ServerBound {
                             message: msg,
@@ -46,6 +51,11 @@ impl HostController {
                     }
                     Ok(SocketEvent::Connect(addr)) => {
                         println!("{} connected", addr);
+                        unprocessed_inputs.lock().unwrap().push(ServerBound {
+                            message: ServerBoundMessage::Connect,
+                            player_name: None,
+                            source: addr,
+                        });
                     }
                     _ => {}
                 }
@@ -70,50 +80,47 @@ impl HostController {
         map_controller: &mut MapController,
     ) {
         if e.update_args().is_some() {
-            {
-                let Self {
-                    unprocessed_inputs,
-                    players,
-                    tx,
-                    ..
-                } = self;
+            self.update_game_state(player_controller, shot_controller, map_controller);
 
-                let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
-                let mut players = players.lock().unwrap();
+            let Self {
+                unprocessed_inputs,
+                players,
+                tx,
+                ..
+            } = self;
 
-                for player in player_controller.players.values_mut().filter(|p| p.dirty) {
-                    player.dirty = false;
-                    let msg = ClientBoundMessage::PlayerUpdate(
-                        player.state.clone(),
-                        player.inputs.clone(),
-                    );
-                    for socket in players.keys() {
-                        let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
-                        tx.send(packet).unwrap();
-                    }
-                }
+            let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
+            let mut players = players.lock().unwrap();
 
-                unprocessed_inputs.drain(..).for_each(|packet| {
-                    Self::process(packet, &mut players, player_controller, map_controller, tx)
-                });
-
-                for shot in shot_controller.shots.values_mut().filter(|shot| shot.dirty) {
-                    shot.dirty = false;
-                    let msg = ClientBoundMessage::ShotUpdate(shot.state.clone());
-                    for socket in players.keys() {
-                        let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
-                        tx.send(packet).unwrap();
-                    }
+            for player in player_controller.players.values_mut().filter(|p| p.dirty) {
+                player.dirty = false;
+                let msg =
+                    ClientBoundMessage::PlayerUpdate(player.state.clone(), player.inputs.clone());
+                for socket in players.keys() {
+                    let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
+                    tx.send(packet).unwrap();
                 }
             }
 
-            self.update_game_state(player_controller, map_controller);
+            unprocessed_inputs.drain(..).for_each(|packet| {
+                Self::process(packet, &mut players, player_controller, map_controller, tx)
+            });
+
+            for shot in shot_controller.shots.values_mut().filter(|shot| shot.dirty) {
+                shot.dirty = false;
+                let msg = ClientBoundMessage::ShotUpdate(shot.state.clone());
+                for socket in players.keys() {
+                    let packet = Packet::unreliable(*socket, bincode::serialize(&msg).unwrap());
+                    tx.send(packet).unwrap();
+                }
+            }
         }
     }
 
     fn update_game_state(
         &self,
         player_controller: &mut PlayerController,
+        shot_controller: &mut ShotController,
         map_controller: &mut MapController,
     ) {
         let players_alive = player_controller
@@ -133,7 +140,16 @@ impl HostController {
                 player.state.lives = 20;
                 player.dirty = true;
             });
+            for shot in shot_controller.shots.values_mut() {
+                shot.state.lives = 0;
+                shot.dirty = true;
+            }
         }
+    }
+
+    fn send_reliable(tx: &Sender<Packet>, target: &SocketAddr, msg: &ClientBoundMessage) {
+        let packet = Packet::reliable_unordered(*target, bincode::serialize(msg).unwrap());
+        tx.send(packet).unwrap();
     }
 
     fn broadcast_reliable(
@@ -141,8 +157,9 @@ impl HostController {
         players: &HashMap<SocketAddr, String>,
         msg: &ClientBoundMessage,
     ) {
+        let data = bincode::serialize(msg).unwrap();
         for socket in players.keys() {
-            let packet = Packet::reliable_unordered(*socket, bincode::serialize(msg).unwrap());
+            let packet = Packet::reliable_unordered(*socket, data.clone());
             tx.send(packet).unwrap();
         }
     }
@@ -157,14 +174,21 @@ impl HostController {
         let player = Self::get_player(packet.player_name, player_controller);
         match packet.message {
             ServerBoundMessage::SetName(name) => {
-                Self::set_name(
-                    name,
-                    packet.source,
-                    players,
-                    player_controller,
-                    map_controller,
-                    tx,
-                );
+                let accepted = Self::set_name(&name, packet.source, player_controller, tx);
+                if accepted {
+                    if let Some(color) = player_controller.get_free_color() {
+                        players.insert(packet.source, name.clone());
+                        let player = Player::new(name.clone(), 100.0, 100.0, color);
+                        player_controller.players.insert(name.clone(), player);
+                        let player = player_controller.players.get(&name).unwrap();
+
+                        let new_player = ClientBoundMessage::PlayerUpdate(
+                            player.state.clone(),
+                            player.inputs.clone(),
+                        );
+                        Self::broadcast_reliable(tx, players, &new_player);
+                    }
+                }
             }
             ServerBoundMessage::UpdateInputs(inputs) => {
                 if let Some(player) = player {
@@ -172,37 +196,37 @@ impl HostController {
                     player.dirty = true;
                 }
             }
+            ServerBoundMessage::Connect => {
+                let map = ClientBoundMessage::SetMap(map_controller.map.clone());
+                Self::send_reliable(tx, &packet.source, &map);
+
+                for player in player_controller.players.values() {
+                    let msg = ClientBoundMessage::PlayerUpdate(
+                        player.state.clone(),
+                        player.inputs.clone(),
+                    );
+                    Self::send_reliable(tx, &packet.source, &msg);
+                }
+            }
             ServerBoundMessage::Disconnect => {}
         }
     }
 
     fn set_name(
-        name: String,
+        name: &str,
         source: SocketAddr,
-        players: &mut HashMap<SocketAddr, String>,
         player_controller: &mut PlayerController,
-        map_controller: &MapController,
         tx: &mut Sender<Packet>,
-    ) {
+    ) -> bool {
         let accepted = !player_controller
             .players
             .keys()
-            .any(|exisiting_name| name == *exisiting_name);
-
-        if accepted {
-            players.insert(source, name.clone());
-            player_controller.players.insert(
-                name.clone(),
-                Player::new(name, 100.0, 100.0, [0.0, 1.0, 1.0, 1.0]),
-            );
-        }
+            .any(|exisiting_name| name == exisiting_name);
 
         let response = ClientBoundMessage::SetNameResponse { accepted };
-        let packet = Packet::reliable_unordered(source, bincode::serialize(&response).unwrap());
-        tx.send(packet).unwrap();
-        let map = ClientBoundMessage::SetMap(map_controller.map.clone());
-        let map = Packet::reliable_unordered(source, bincode::serialize(&map).unwrap());
-        tx.send(map).unwrap();
+        Self::send_reliable(tx, &source, &response);
+
+        accepted
     }
 
     fn get_player(

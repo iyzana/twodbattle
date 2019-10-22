@@ -5,6 +5,17 @@ use crate::{Map, Player, ShotController};
 use piston::input::{Button, ButtonArgs, ButtonState, GenericEvent, Key};
 use std::collections::HashMap;
 
+const COLORS: [[f32; 4]; 8] = [
+    [0.000, 0.772, 0.244, 1.0],
+    [1.000, 0.204, 0.735, 1.0],
+    [1.000, 0.577, 0.094, 1.0],
+    [0.274, 0.637, 1.000, 1.0],
+    [1.000, 1.000, 0.200, 1.0],
+    [0.038, 0.000, 0.764, 1.0],
+    [0.650, 0.033, 0.000, 1.0],
+    [0.254, 0.988, 1.000, 1.0],
+];
+
 #[derive(Default)]
 pub struct PlayerController {
     pub players: HashMap<String, Player>,
@@ -109,6 +120,7 @@ impl PlayerController {
             if player.state.lives > 0 && collision::collides(player, shot) {
                 shot.state.lives = 0;
                 player.state.lives -= 1;
+                player.dirty = true;
             }
         }
     }
@@ -118,5 +130,17 @@ impl PlayerController {
 
         *x += *dx * dt;
         *y += *dy * dt;
+    }
+
+    pub fn get_free_color(&self) -> Option<[f32; 4]> {
+        COLORS
+            .iter()
+            .find(|&color| {
+                !self
+                    .players
+                    .values()
+                    .any(|player| player.state.color == *color)
+            })
+            .copied()
     }
 }

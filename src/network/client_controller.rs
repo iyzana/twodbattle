@@ -96,18 +96,13 @@ impl ClientController {
                 )
             });
 
-            if let Some(LocalInputController {
-                local_player,
-                dirty,
-                ..
-            }) = local_input_controller.as_mut()
-            {
-                if *dirty {
-                    *dirty = false;
-                    let player = player_controller
-                        .players
-                        .get_mut(local_player)
-                        .expect("local player not present in player list");
+            let player = local_input_controller
+                .as_mut()
+                .map(|l| &l.local_player)
+                .and_then(|name| player_controller.players.get_mut(name));
+            if let Some(player) = player {
+                if player.dirty {
+                    player.dirty = false;
                     let msg = ServerBoundMessage::UpdateInputs(player.inputs.clone());
                     println!("sending msg {:?}", msg);
                     let packet = Packet::unreliable(self.host, bincode::serialize(&msg).unwrap());
@@ -137,7 +132,7 @@ impl ClientController {
             }
             ClientBoundMessage::PlayerUpdate(state, inputs) => {
                 if let Some(player) = player_controller.players.get_mut(&state.name) {
-                    println!("overriding player:\n  {:?}", state);
+                    println!("overriding player");
                     player.state = state;
                     if local_input_controller
                         .as_ref()
@@ -148,9 +143,9 @@ impl ClientController {
                         player.inputs = inputs;
                     }
                 } else {
-                    println!("creating new player:\n  {:?}\n  {:?}", state.name, inputs);
+                    println!("creating new player: {:?}", state.name);
                     let mut player =
-                        Player::new(state.name.clone(), 50.0, 50.0, [0.0, 1.0, 0.0, 1.0]);
+                        Player::new(state.name.clone(), 50.0, 50.0, [0.0, 0.0, 0.0, 1.0]);
                     player.state = state;
                     player.inputs = inputs;
                     player_controller
@@ -168,7 +163,7 @@ impl ClientController {
                             .players
                             .get(&shot_state.id.owner)
                             .map(|player| player.state.color)
-                            .unwrap_or([0.0; 4]);
+                            .unwrap_or([1.0; 4]);
                         Shot::from_state(shot_state, color)
                     });
             }
