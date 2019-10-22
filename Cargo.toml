@@ -15,7 +15,6 @@ piston2d-graphics = "0.35.0"
 piston2d-opengl_graphics = "0.69.0"
 rand = "0.7.2"
 laminar = "0.3.2"
-failure = "0.1.6"
 serde = { version = "1.0.101", features = ["derive"] }
 bincode = "1.2.0"
 crossbeam = "0.7.2"
