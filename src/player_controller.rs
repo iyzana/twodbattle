@@ -2,6 +2,7 @@ use crate::collision;
 use crate::collision::Collision;
 use crate::player;
 use crate::{Map, Player, ShotController};
+use crate::cell::Cell;
 use piston::input::{Button, ButtonArgs, ButtonState, GenericEvent, Key};
 use std::collections::HashMap;
 
@@ -33,13 +34,14 @@ impl PlayerController {
         e: &E,
     ) {
         if let Some(tick) = e.update_args() {
+            let cells: Vec<_> = map.all_cells().collect();
             for player in self.players.values_mut() {
                 if player.state.lives == 0 {
                     continue;
                 }
 
                 Self::update(player, tick.dt);
-                Self::process_collision(player, map, tick.dt, shot_controller);
+                Self::process_collision(player, &cells, tick.dt, shot_controller);
                 Self::motion(player, tick.dt);
             }
         }
@@ -86,12 +88,11 @@ impl PlayerController {
 
     fn process_collision(
         player: &mut Player,
-        map: &Map,
+        cells: &Vec<Cell>,
         dt: f64,
         shot_controller: &mut ShotController,
     ) {
-        let cells: Vec<_> = map.all_cells().collect();
-        match collision::check(player, &cells, dt) {
+        match collision::check(player, cells, dt) {
             Some(Collision::SIDE { x, y }) => {
                 if x.is_some() {
                     player.state.dx = 0.0;

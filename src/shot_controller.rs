@@ -3,6 +3,7 @@ use crate::collision::Collision;
 use crate::entity::Bounds;
 use crate::shot;
 use crate::{Map, PlayerController, Shot};
+use crate::cell::Cell;
 use piston::input::GenericEvent;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -24,9 +25,8 @@ impl ShotController {
         player_controller: &mut PlayerController,
         e: &E,
     ) {
-        fn process_collision(shot: &mut Shot, map: &Map, dt: f64) {
-            let cells: Vec<_> = map.all_cells().collect();
-            match collision::check(shot, &cells, dt) {
+        fn process_collision(shot: &mut Shot, cells: &Vec<Cell>, dt: f64) {
+            match collision::check(shot, cells, dt) {
                 Some(Collision::SIDE { x, y }) => {
                     if x.is_some() {
                         shot.state.dx = -shot.state.dx;
@@ -63,8 +63,9 @@ impl ShotController {
                 shot.state.lives > 0 && collides(shot.bounds(), [0.0, 0.0, 1920.0, 1080.0])
             });
 
+            let cells: Vec<_> = map.all_cells().collect();
             for mut shot in self.shots.values_mut() {
-                process_collision(&mut shot, map, tick.dt);
+                process_collision(&mut shot, &cells, tick.dt);
                 motion(&mut shot, tick.dt);
             }
         }
