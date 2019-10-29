@@ -133,14 +133,22 @@ impl ClientController {
             ClientBoundMessage::PlayerUpdate(state, inputs) => {
                 if let Some(player) = player_controller.players.get_mut(&state.name) {
                     println!("overriding player");
-                    player.state = state;
                     if local_input_controller
                         .as_ref()
-                        .map(|l| l.local_player != player.state.name)
+                        .map(|l| player.state.name != l.local_player)
                         .unwrap_or(true)
                     {
+                        // always sync other players
                         println!("  {:?}", inputs);
+                        player.state = state;
                         player.inputs = inputs;
+                    } else if !player.inputs.left
+                        && !player.inputs.right
+                        && !player.inputs.jump
+                        && player.on_ground
+                    {
+                        // sync local player when standing still
+                        player.state = state;
                     }
                 } else {
                     println!("creating new player: {:?}", state.name);
