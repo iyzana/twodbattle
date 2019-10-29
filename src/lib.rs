@@ -81,7 +81,6 @@ pub fn run() {
     let join_server = matches.value_of("join");
     let observe = matches.is_present("observe");
 
-    let opengl = OpenGL::V3_3;
     let mut window: GlfwWindow = WindowSettings::new("2dbattle", (1920, 1080))
         .exit_on_esc(true)
         .samples(16)
@@ -89,10 +88,8 @@ pub fn run() {
         .build()
         .unwrap();
 
-    let mut event_settings = EventSettings::new();
-    event_settings.ups_reset = 15;
-    let mut events = Events::new(event_settings);
-    let mut gl = GlGraphics::new(opengl);
+    let mut events = Events::new(EventSettings::new());
+    let mut gl = GlGraphics::new(OpenGL::V3_3);
 
     let map = Map::new();
     let mut map_controller = MapController::new(map);
@@ -133,17 +130,20 @@ pub fn run() {
         ClientController::connect(addr.parse().unwrap(), "0.0.0.0:0".parse().unwrap()).unwrap()
     });
 
+    fn get_scaling(window: &GlfwWindow) -> (f64, f64, f64) {
+        let Size { width, height } = window.size();
+        let scale = (width / 1920.0).min(height / 1080.0);
+        let translate_x = (width - 1920.0 * scale) / 2.0;
+        let translate_y = (height - 1080.0 * scale) / 2.0;
+        (scale, translate_x, translate_y)
+    }
+
     while let Some(event) = events.next(&mut window) {
         if let Some(local_input_controller) = local_input_controller.as_mut() {
-            let Size { width, height } = window.size();
-            let scale = (width / 1920.0).min(height / 1080.0);
-            let translate_x = (width - 1920.0 * scale) / 2.0;
-            let translate_y = (height - 1080.0 * scale) / 2.0;
-
             local_input_controller.event(
                 &event,
                 &mut player_controller,
-                (scale, translate_x, translate_y),
+                get_scaling(&window),
             );
         }
         if let Some(client) = client.as_mut() {
@@ -172,10 +172,7 @@ pub fn run() {
                 use graphics::{clear, Transformed};
                 clear([0.0, 0.0, 0.0, 1.0], g);
 
-                let Size { width, height } = window.size();
-                let scale = (width / 1920.0).min(height / 1080.0);
-                let translate_x = (width - 1920.0 * scale) / 2.0;
-                let translate_y = (height - 1080.0 * scale) / 2.0;
+                let (scale, translate_x, translate_y) = get_scaling(&window);
                 // scale to window size and center
                 c.transform = c
                     .transform
