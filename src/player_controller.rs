@@ -1,8 +1,8 @@
+use crate::cell::Cell;
 use crate::collision;
 use crate::collision::Collision;
 use crate::player;
 use crate::{Map, Player, ShotController};
-use crate::cell::Cell;
 use piston::input::{Button, ButtonArgs, ButtonState, GenericEvent, Key};
 use std::collections::HashMap;
 

@@ -1,9 +1,9 @@
+use crate::cell::Cell;
 use crate::collision;
 use crate::collision::Collision;
 use crate::entity::Bounds;
 use crate::shot;
 use crate::{Map, PlayerController, Shot};
-use crate::cell::Cell;
 use piston::input::GenericEvent;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU32, Ordering};

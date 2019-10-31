@@ -140,11 +140,7 @@ pub fn run() {
 
     while let Some(event) = events.next(&mut window) {
         if let Some(local_input_controller) = local_input_controller.as_mut() {
-            local_input_controller.event(
-                &event,
-                &mut player_controller,
-                get_scaling(&window),
-            );
+            local_input_controller.event(&event, &mut player_controller, get_scaling(&window));
         }
         if let Some(client) = client.as_mut() {
             client.event(
