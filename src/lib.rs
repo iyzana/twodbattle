@@ -54,7 +54,6 @@ pub fn run() -> Result<(), anyhow::Error> {
             Arg::with_name("port")
                 .long("port")
                 .takes_value(true)
-                .value_name("PORT")
                 .default_value("62304")
                 .help("port to host on"),
         )
@@ -132,8 +131,7 @@ pub fn run() -> Result<(), anyhow::Error> {
     let mut client = join_server.map(|addr| {
         let name = local_input_controller
             .as_ref()
-            .map(|l| &l.local_player)
-            .map(|n| n.as_str());
+            .map(|l| l.local_player.as_str());
         ClientController::connect(addr.parse().unwrap(), "0.0.0.0:0".parse().unwrap(), name)
             .unwrap()
     });
