@@ -66,6 +66,13 @@ pub fn run() -> Result<(), anyhow::Error> {
                 .takes_value(true),
         )
         .arg(
+            Arg::with_name("name")
+                .long("name")
+                .help("nickname to play as")
+                .takes_value(true)
+                .required_unless("observe"),
+        )
+        .arg(
             Arg::with_name("observe")
                 .long("observe")
                 .help("only watch the game, do not register a player"),
@@ -102,11 +109,7 @@ pub fn run() -> Result<(), anyhow::Error> {
     let mut local_input_controller = if observe {
         None
     } else {
-        let name = if join_server.is_some() {
-            "client"
-        } else {
-            "host"
-        };
+        let name = matches.value_of("name").unwrap();
         if host {
             let color = player_controller
                 .get_free_color()
@@ -127,7 +130,12 @@ pub fn run() -> Result<(), anyhow::Error> {
         None
     };
     let mut client = join_server.map(|addr| {
-        ClientController::connect(addr.parse().unwrap(), "0.0.0.0:0".parse().unwrap()).unwrap()
+        let name = local_input_controller
+            .as_ref()
+            .map(|l| &l.local_player)
+            .map(|n| n.as_str());
+        ClientController::connect(addr.parse().unwrap(), "0.0.0.0:0".parse().unwrap(), name)
+            .unwrap()
     });
 
     fn get_scaling(window: &GlfwWindow) -> (f64, f64, f64) {

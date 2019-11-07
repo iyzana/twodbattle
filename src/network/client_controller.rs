@@ -5,6 +5,7 @@ use crate::LocalInputController;
 use crate::MapController;
 use crate::PlayerController;
 use crate::ShotController;
+use anyhow::anyhow;
 use bincode;
 use crossbeam::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
@@ -13,7 +14,6 @@ use serde::Deserialize;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use anyhow::anyhow;
 
 #[derive(Deserialize)]
 struct ClientBound {
@@ -27,8 +27,15 @@ pub struct ClientController {
 }
 
 impl ClientController {
-    pub fn connect(host: SocketAddr, local: SocketAddr) -> Result<Self, ErrorKind> {
-        let mut socket = Socket::bind(local)?;
+    pub fn connect(
+        host: SocketAddr,
+        local: SocketAddr,
+        name: Option<&str>,
+    ) -> Result<Self, ErrorKind> {
+        let mut socket = Socket::bind_with_config(local, laminar::Config {
+            heartbeat_interval: Some(std::time::Duration::from_secs(3)),
+            ..laminar::Config::default()
+        })?;
         let unprocessed_inputs = Arc::new(Mutex::new(vec![]));
         let rx = socket.get_event_receiver();
 
@@ -56,7 +63,9 @@ impl ClientController {
         }
 
         let mut tx = socket.get_packet_sender();
-        Self::set_name(&host, String::from("client"), &mut tx);
+        if let Some(name) = name {
+            Self::set_name(&host, name.to_string(), &mut tx);
+        }
 
         thread::spawn(move || socket.start_polling());
 
@@ -85,17 +94,20 @@ impl ClientController {
 
             let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
 
-            unprocessed_inputs.drain(..).map(|packet| {
-                Self::process(
-                    &host,
-                    packet,
-                    player_controller,
-                    local_input_controller,
-                    shot_controller,
-                    map_controller,
-                    tx,
-                )
-            }).collect::<Result<_, _>>()?;
+            unprocessed_inputs
+                .drain(..)
+                .map(|packet| {
+                    Self::process(
+                        &host,
+                        packet,
+                        player_controller,
+                        local_input_controller,
+                        shot_controller,
+                        map_controller,
+                        tx,
+                    )
+                })
+                .collect::<Result<_, _>>()?;
 
             let player = local_input_controller
                 .as_mut()
