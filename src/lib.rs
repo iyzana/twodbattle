@@ -41,7 +41,7 @@ pub use shot::Shot;
 pub use shot_controller::ShotController;
 pub use shot_view::ShotView;
 
-pub fn run() {
+pub fn run() -> Result<(), anyhow::Error> {
     let matches = App::new("twodbattle")
         .author("succcubbus")
         .arg(
@@ -149,7 +149,7 @@ pub fn run() {
                 &mut map_controller,
                 &mut shot_controller,
                 &mut local_input_controller,
-            );
+            )?;
         }
         if let Some(host) = host.as_mut() {
             map_controller.event(&event);
@@ -181,4 +181,6 @@ pub fn run() {
             });
         }
     }
+
+    Ok(())
 }

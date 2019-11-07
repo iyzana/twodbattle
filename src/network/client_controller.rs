@@ -13,6 +13,7 @@ use serde::Deserialize;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use std::thread;
+use anyhow::anyhow;
 
 #[derive(Deserialize)]
 struct ClientBound {
@@ -73,7 +74,7 @@ impl ClientController {
         map_controller: &mut MapController,
         shot_controller: &mut ShotController,
         local_input_controller: &mut Option<LocalInputController>,
-    ) {
+    ) -> Result<(), anyhow::Error> {
         if e.update_args().is_some() {
             let Self {
                 host,
@@ -84,7 +85,7 @@ impl ClientController {
 
             let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
 
-            unprocessed_inputs.drain(..).for_each(|packet| {
+            unprocessed_inputs.drain(..).map(|packet| {
                 Self::process(
                     &host,
                     packet,
@@ -94,7 +95,7 @@ impl ClientController {
                     map_controller,
                     tx,
                 )
-            });
+            }).collect::<Result<_, _>>()?;
 
             let player = local_input_controller
                 .as_mut()
@@ -110,6 +111,8 @@ impl ClientController {
                 }
             }
         }
+
+        Ok(())
     }
 
     fn process(
@@ -120,11 +123,11 @@ impl ClientController {
         shot_controller: &mut ShotController,
         map_controller: &mut MapController,
         tx: &mut Sender<Packet>,
-    ) {
+    ) -> Result<(), anyhow::Error> {
         match packet.message {
             ClientBoundMessage::SetNameResponse { accepted } => {
                 if !accepted {
-                    Self::set_name(host, String::from("noname"), tx);
+                    return Err(anyhow!("name already taken"));
                 }
             }
             ClientBoundMessage::SetMap(map) => {
@@ -176,6 +179,8 @@ impl ClientController {
                     });
             }
         }
+
+        Ok(())
     }
 
     fn set_name(host: &SocketAddr, name: String, tx: &mut Sender<Packet>) {

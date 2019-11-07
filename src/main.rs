@@ -1,5 +1,5 @@
 extern crate twodbattle;
 
-fn main() {
-    twodbattle::run();
+fn main() -> Result<(), anyhow::Error> {
+    twodbattle::run()
 }
