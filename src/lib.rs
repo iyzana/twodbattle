@@ -21,7 +21,7 @@ mod shot;
 mod shot_controller;
 mod shot_view;
 
-use clap::{App, Arg, ArgGroup};
+use clap::ArgMatches;
 use glfw_window::GlfwWindow;
 use local_input_controller::LocalInputController;
 pub use map::Map;
@@ -41,48 +41,7 @@ pub use shot::Shot;
 pub use shot_controller::ShotController;
 pub use shot_view::ShotView;
 
-pub fn run() -> Result<(), anyhow::Error> {
-    let matches = App::new("twodbattle")
-        .author("succcubbus")
-        .arg(
-            Arg::with_name("host")
-                .long("host")
-                .requires("port")
-                .help("hosts a game"),
-        )
-        .arg(
-            Arg::with_name("port")
-                .long("port")
-                .takes_value(true)
-                .default_value("62304")
-                .help("port to host on"),
-        )
-        .arg(
-            Arg::with_name("join")
-                .long("join")
-                .value_name("SERVER:PORT")
-                .help("join an existing game")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("name")
-                .long("name")
-                .help("nickname to play as")
-                .takes_value(true)
-                .required_unless("observe"),
-        )
-        .arg(
-            Arg::with_name("observe")
-                .long("observe")
-                .help("only watch the game, do not register a player"),
-        )
-        .group(
-            ArgGroup::with_name("type")
-                .args(&["host", "join"])
-                .required(true),
-        )
-        .get_matches();
-
+pub fn run(matches: &ArgMatches) -> Result<(), anyhow::Error> {
     let host = matches.is_present("host");
     let join_server = matches.value_of("join");
     let observe = matches.is_present("observe");

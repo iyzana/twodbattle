@@ -88,7 +88,7 @@ impl PlayerController {
 
     fn process_collision(
         player: &mut Player,
-        cells: &Vec<Cell>,
+        cells: &[Cell],
         dt: f64,
         shot_controller: &mut ShotController,
     ) {

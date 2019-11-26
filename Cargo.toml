@@ -18,5 +18,5 @@ laminar = "0.3.2"
 serde = { version = "1.0.101", features = ["derive"] }
 bincode = "1.2.0"
 crossbeam = "0.7.2"
-clap = "2.33.0"
+clap = { version = "2.33.0", features = ["yaml"] }
 anyhow = "1.0.18"

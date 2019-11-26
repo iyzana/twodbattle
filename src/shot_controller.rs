@@ -25,7 +25,7 @@ impl ShotController {
         player_controller: &mut PlayerController,
         e: &E,
     ) {
-        fn process_collision(shot: &mut Shot, cells: &Vec<Cell>, dt: f64) {
+        fn process_collision(shot: &mut Shot, cells: &[Cell], dt: f64) {
             match collision::check(shot, cells, dt) {
                 Some(Collision::SIDE { x, y }) => {
                     if x.is_some() {
