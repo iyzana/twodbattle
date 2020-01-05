@@ -1,7 +1,7 @@
 [package]
 name = "twodbattle"
 version = "0.1.0"
-authors = ["succcubbus"]
+authors = ["iyzana"]
 edition = "2018"
 
 [[bin]]

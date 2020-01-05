@@ -1,28 +1,28 @@
 name: twodbattle
-author: succcubbus
+author: iyzana
 args:
   - host:
       long: host
       requires: port
-      help: "hosts a game"
+      help: 'hosts a game'
   - port:
       long: port
       takes_value: true
-      default_value: "62304"
-      help: "port to host on"
+      default_value: '62304'
+      help: 'port to host on'
   - join:
       long: join
-      value_name: "SERVER:PORT"
-      help: "join an existing game"
+      value_name: 'SERVER:PORT'
+      help: 'join an existing game'
       takes_value: true
   - name:
       long: name
-      help: "nickname to play as"
+      help: 'nickname to play as'
       takes_value: true
-      required_unless: "observe"
+      required_unless: 'observe'
   - observe:
       long: observe
-      help: "only watch the game, do not register a player"
+      help: 'only watch the game, do not register a player'
 groups:
   - type:
       args:
