@@ -2,7 +2,7 @@ use crate::network::messages::*;
 use crate::player::Player;
 use crate::{Map, MapController, PlayerController, ShotController};
 use bincode;
-use crossbeam::Sender;
+use crossbeam_channel::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
 use piston::input::GenericEvent;
 use std::collections::HashMap;

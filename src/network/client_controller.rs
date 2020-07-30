@@ -7,7 +7,7 @@ use crate::PlayerController;
 use crate::ShotController;
 use anyhow::anyhow;
 use bincode;
-use crossbeam::Sender;
+use crossbeam_channel::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
 use piston::input::GenericEvent;
 use serde::Deserialize;
@@ -32,10 +32,13 @@ impl ClientController {
         local: SocketAddr,
         name: Option<&str>,
     ) -> Result<Self, ErrorKind> {
-        let mut socket = Socket::bind_with_config(local, laminar::Config {
-            heartbeat_interval: Some(std::time::Duration::from_secs(3)),
-            ..laminar::Config::default()
-        })?;
+        let mut socket = Socket::bind_with_config(
+            local,
+            laminar::Config {
+                heartbeat_interval: Some(std::time::Duration::from_secs(3)),
+                ..laminar::Config::default()
+            },
+        )?;
         let unprocessed_inputs = Arc::new(Mutex::new(vec![]));
         let rx = socket.get_event_receiver();
 
