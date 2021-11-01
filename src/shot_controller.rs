@@ -27,7 +27,7 @@ impl ShotController {
     ) {
         fn process_collision(shot: &mut Shot, cells: &[Cell], dt: f64) {
             match collision::check(shot, cells, dt) {
-                Some(Collision::SIDE { x, y }) => {
+                Some(Collision::Side { x, y }) => {
                     if x.is_some() {
                         shot.state.dx = -shot.state.dx;
                     }
@@ -37,7 +37,7 @@ impl ShotController {
                     shot.state.lives -= 1;
                     shot.dirty = true;
                 }
-                Some(Collision::CORNER { .. }) => {
+                Some(Collision::Corner { .. }) => {
                     shot.state.dx = -shot.state.dx;
                     shot.state.dy = -shot.state.dy;
                     shot.state.lives -= 1;
@@ -96,7 +96,7 @@ impl ShotController {
                     player.state.color,
                 );
                 let cells: Vec<_> = map.all_cells().collect();
-                if let Some(Collision::SIDE {
+                if let Some(Collision::Side {
                     x: Some(_),
                     y: Some(_),
                 }) = collision::check(&shot, &cells, 0.0)

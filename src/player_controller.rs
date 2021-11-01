@@ -93,7 +93,7 @@ impl PlayerController {
         shot_controller: &mut ShotController,
     ) {
         match collision::check(player, cells, dt) {
-            Some(Collision::SIDE { x, y }) => {
+            Some(Collision::Side { x, y }) => {
                 if x.is_some() {
                     player.state.dx = 0.0;
                 }
@@ -109,7 +109,7 @@ impl PlayerController {
                     player.on_ground = false;
                 }
             }
-            Some(Collision::CORNER { .. }) => {
+            Some(Collision::Corner { .. }) => {
                 player.state.dx = 0.0;
             }
             _ => {
@@ -133,6 +133,7 @@ impl PlayerController {
         *y += *dy * dt;
     }
 
+    #[allow(clippy::float_cmp)]
     pub fn get_free_color(&self) -> Option<[f32; 4]> {
         COLORS
             .iter()

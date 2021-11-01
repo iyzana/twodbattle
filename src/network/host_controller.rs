@@ -1,7 +1,6 @@
 use crate::network::messages::*;
 use crate::player::Player;
 use crate::{Map, MapController, PlayerController, ShotController};
-use bincode;
 use crossbeam_channel::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
 use piston::input::GenericEvent;
@@ -24,10 +23,13 @@ pub struct HostController {
 
 impl HostController {
     pub fn listen(addr: impl ToSocketAddrs) -> Result<Self, ErrorKind> {
-        let mut socket = Socket::bind_with_config(addr, laminar::Config {
-            heartbeat_interval: Some(std::time::Duration::from_secs(3)),
-            ..laminar::Config::default()
-        })?;
+        let mut socket = Socket::bind_with_config(
+            addr,
+            laminar::Config {
+                heartbeat_interval: Some(std::time::Duration::from_secs(3)),
+                ..laminar::Config::default()
+            },
+        )?;
         let unprocessed_inputs = Arc::new(Mutex::new(vec![]));
         let players = Arc::new(Mutex::new(HashMap::new()));
 

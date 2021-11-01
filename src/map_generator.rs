@@ -135,13 +135,13 @@ fn valid_map(grid: &[Vec<bool>]) -> bool {
 
     // reachability through jumping
     for (x, y) in jump_test_left {
-        if !jumpable(x, y, &grid, x.max(6) - 6..=x) {
+        if !jumpable(x, y, grid, x.max(6) - 6..=x) {
             return false;
         }
     }
 
     for (x, y) in jump_test_right {
-        if !jumpable(x, y, &grid, x..=(x + 6).min(width - 1)) {
+        if !jumpable(x, y, grid, x..=(x + 6).min(width - 1)) {
             return false;
         }
     }

@@ -6,7 +6,6 @@ use crate::MapController;
 use crate::PlayerController;
 use crate::ShotController;
 use anyhow::anyhow;
-use bincode;
 use crossbeam_channel::Sender;
 use laminar::{ErrorKind, Packet, Socket, SocketEvent};
 use piston::input::GenericEvent;
@@ -89,7 +88,6 @@ impl ClientController {
     ) -> Result<(), anyhow::Error> {
         if e.update_args().is_some() {
             let Self {
-                host,
                 unprocessed_inputs,
                 tx,
                 ..
@@ -97,20 +95,15 @@ impl ClientController {
 
             let mut unprocessed_inputs = unprocessed_inputs.lock().unwrap();
 
-            unprocessed_inputs
-                .drain(..)
-                .map(|packet| {
-                    Self::process(
-                        &host,
-                        packet,
-                        player_controller,
-                        local_input_controller,
-                        shot_controller,
-                        map_controller,
-                        tx,
-                    )
-                })
-                .collect::<Result<_, _>>()?;
+            unprocessed_inputs.drain(..).try_for_each(|packet| {
+                Self::process(
+                    packet,
+                    player_controller,
+                    local_input_controller,
+                    shot_controller,
+                    map_controller,
+                )
+            })?;
 
             let player = local_input_controller
                 .as_mut()
@@ -131,13 +124,11 @@ impl ClientController {
     }
 
     fn process(
-        host: &SocketAddr,
         packet: ClientBound,
         player_controller: &mut PlayerController,
         local_input_controller: &Option<LocalInputController>,
         shot_controller: &mut ShotController,
         map_controller: &mut MapController,
-        tx: &mut Sender<Packet>,
     ) -> Result<(), anyhow::Error> {
         match packet.message {
             ClientBoundMessage::SetNameResponse { accepted } => {

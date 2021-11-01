@@ -2,8 +2,8 @@ use crate::entity::{Bounds, Speed};
 
 #[derive(Debug)]
 pub enum Collision<'a, B: Bounds> {
-    SIDE { x: Option<&'a B>, y: Option<&'a B> },
-    CORNER { cell: &'a B },
+    Side { x: Option<&'a B>, y: Option<&'a B> },
+    Corner { cell: &'a B },
 }
 
 pub fn check<'a, E: Bounds + Speed, B: Bounds + 'a>(
@@ -21,7 +21,7 @@ pub fn check<'a, E: Bounds + Speed, B: Bounds + 'a>(
     let collides_y = obstacles.iter().find(|&cell| collides(&moved_y, cell));
 
     if collides_x.or(collides_y).is_some() {
-        Some(Collision::SIDE {
+        Some(Collision::Side {
             x: collides_x,
             y: collides_y,
         })
@@ -30,7 +30,7 @@ pub fn check<'a, E: Bounds + Speed, B: Bounds + 'a>(
         obstacles
             .iter()
             .find(|&cell| collides(&moved_xy, cell))
-            .map(|cell| Collision::CORNER { cell })
+            .map(|cell| Collision::Corner { cell })
     }
 }
 

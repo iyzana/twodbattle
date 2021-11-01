@@ -47,13 +47,13 @@ impl Map {
         }
     }
 
-    pub fn all_cells<'a>(&'a self) -> impl Iterator<Item = Cell> + 'a {
+    pub fn all_cells(&self) -> impl Iterator<Item = Cell> + '_ {
         (0..self.width as usize)
             .cartesian_product(0..self.height as usize)
             .filter_map(move |(gx, gy)| self.cell_at_grid(gx, gy))
     }
 
-    pub fn cells_around<'a>(&'a self, x: f64, y: f64) -> impl Iterator<Item = Cell> + 'a {
+    pub fn cells_around(&self, x: f64, y: f64) -> impl Iterator<Item = Cell> + '_ {
         let (gx, gy) = self.coords_at(x, y);
         (gx.max(1) - 1..(gx + 2).min(self.width as usize))
             .cartesian_product(gy.max(1) - 1..(gy + 2).min(self.height as usize))
